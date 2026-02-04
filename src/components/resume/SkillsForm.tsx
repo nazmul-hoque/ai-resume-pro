@@ -2,7 +2,7 @@ import { Skill } from "@/types/resume";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Lightbulb } from "lucide-react";
+import { Plus, X, Lightbulb, Sparkles, Loader2 } from "lucide-react";
 import { useState } from "react";
 import {
   Select,
@@ -11,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAiSuggestion } from "@/hooks/useAiSuggestion";
+import { toast } from "sonner";
 
 interface SkillsFormProps {
   data: Skill[];
@@ -27,6 +29,7 @@ const skillLevelColors = {
 export const SkillsForm = ({ data, onChange }: SkillsFormProps) => {
   const [newSkill, setNewSkill] = useState("");
   const [newLevel, setNewLevel] = useState<Skill["level"]>("intermediate");
+  const { getSuggestion, isLoading } = useAiSuggestion();
 
   const addSkill = () => {
     if (!newSkill.trim()) return;
@@ -48,6 +51,30 @@ export const SkillsForm = ({ data, onChange }: SkillsFormProps) => {
     if (e.key === "Enter") {
       e.preventDefault();
       addSkill();
+    }
+  };
+
+  const handleAiSuggest = async () => {
+    const suggestion = await getSuggestion("skills", {
+      skills: data.map(s => s.name),
+    });
+
+    if (suggestion) {
+      const suggestedSkills = suggestion
+        .split("\n")
+        .map(s => s.trim())
+        .filter(s => s.length > 0 && !data.some(existing => 
+          existing.name.toLowerCase() === s.toLowerCase()
+        ));
+
+      const newSkills: Skill[] = suggestedSkills.map(name => ({
+        id: crypto.randomUUID(),
+        name,
+        level: "intermediate" as const,
+      }));
+
+      onChange([...data, ...newSkills]);
+      toast.success(`Added ${newSkills.length} suggested skills!`);
     }
   };
 
@@ -77,12 +104,27 @@ export const SkillsForm = ({ data, onChange }: SkillsFormProps) => {
         </Button>
       </div>
 
+      <Button 
+        variant="outline" 
+        size="sm" 
+        className="gap-2 w-full"
+        onClick={handleAiSuggest}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Sparkles className="w-4 h-4" />
+        )}
+        {isLoading ? "Suggesting skills..." : "AI Suggest Skills"}
+      </Button>
+
       {data.length === 0 ? (
         <div className="text-center py-8 border-2 border-dashed rounded-lg">
           <Lightbulb className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
           <p className="text-muted-foreground mb-2">No skills added yet</p>
           <p className="text-xs text-muted-foreground">
-            Add relevant skills to showcase your expertise
+            Add skills manually or click "AI Suggest Skills" to get recommendations
           </p>
         </div>
       ) : (

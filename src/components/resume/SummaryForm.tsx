@@ -1,7 +1,9 @@
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Sparkles, FileText } from "lucide-react";
+import { Sparkles, FileText, Loader2 } from "lucide-react";
+import { useAiSuggestion } from "@/hooks/useAiSuggestion";
+import { toast } from "sonner";
 
 interface SummaryFormProps {
   data: string;
@@ -9,6 +11,19 @@ interface SummaryFormProps {
 }
 
 export const SummaryForm = ({ data, onChange }: SummaryFormProps) => {
+  const { getSuggestion, isLoading } = useAiSuggestion();
+
+  const handleAiEnhance = async () => {
+    const suggestion = await getSuggestion("summary", {
+      currentText: data || undefined,
+    });
+
+    if (suggestion) {
+      onChange(suggestion);
+      toast.success("Summary enhanced with AI!");
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -16,9 +31,19 @@ export const SummaryForm = ({ data, onChange }: SummaryFormProps) => {
           <FileText className="w-4 h-4 text-muted-foreground" />
           Professional Summary
         </Label>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Sparkles className="w-4 h-4" />
-          AI Enhance
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="gap-2"
+          onClick={handleAiEnhance}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Sparkles className="w-4 h-4" />
+          )}
+          {isLoading ? "Generating..." : "AI Enhance"}
         </Button>
       </div>
       
@@ -31,7 +56,7 @@ export const SummaryForm = ({ data, onChange }: SummaryFormProps) => {
       />
       
       <p className="text-xs text-muted-foreground">
-        Tip: Keep your summary concise and tailored to the job you're applying for. Focus on your unique value proposition.
+        Tip: Click "AI Enhance" to generate or improve your summary. The AI will create an ATS-friendly version.
       </p>
     </div>
   );
