@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { ResumeData, defaultResumeData } from "@/types/resume";
 import { PersonalInfoForm } from "./PersonalInfoForm";
 import { SummaryForm } from "./SummaryForm";
@@ -11,6 +11,7 @@ import { TemplateId } from "./templates";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { usePdfExport } from "@/hooks/usePdfExport";
 import {
   Accordion,
   AccordionContent,
@@ -27,6 +28,7 @@ import {
   ArrowLeft,
   Eye,
   Edit3,
+  Loader2,
 } from "lucide-react";
 
 interface ResumeBuilderProps {
@@ -37,6 +39,17 @@ export const ResumeBuilder = ({ onBack }: ResumeBuilderProps) => {
   const [resumeData, setResumeData] = useState<ResumeData>(defaultResumeData);
   const [showPreview, setShowPreview] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>("modern");
+  const previewRef = useRef<HTMLDivElement>(null);
+  
+  const { exportToPdf, isExporting } = usePdfExport({
+    filename: resumeData.personalInfo.fullName 
+      ? `${resumeData.personalInfo.fullName.replace(/\s+/g, "_")}_Resume`
+      : "Resume"
+  });
+
+  const handleDownloadPdf = () => {
+    exportToPdf(previewRef);
+  };
 
   const sections = [
     {
@@ -127,9 +140,19 @@ export const ResumeBuilder = ({ onBack }: ResumeBuilderProps) => {
                 </>
               )}
             </Button>
-            <Button variant="hero" size="sm" className="gap-2">
-              <Download className="w-4 h-4" />
-              Download PDF
+            <Button 
+              variant="hero" 
+              size="sm" 
+              className="gap-2"
+              onClick={handleDownloadPdf}
+              disabled={isExporting}
+            >
+              {isExporting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              {isExporting ? "Exporting..." : "Download PDF"}
             </Button>
           </div>
         </div>
@@ -182,7 +205,9 @@ export const ResumeBuilder = ({ onBack }: ResumeBuilderProps) => {
                 </span>
               </div>
               <ScrollArea className="h-[calc(100vh-220px)]">
-                <ResumePreview data={resumeData} template={selectedTemplate} />
+                <div ref={previewRef}>
+                  <ResumePreview data={resumeData} template={selectedTemplate} />
+                </div>
               </ScrollArea>
             </Card>
           </div>
