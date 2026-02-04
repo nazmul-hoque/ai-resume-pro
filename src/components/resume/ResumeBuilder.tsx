@@ -6,6 +6,8 @@ import { ExperienceForm } from "./ExperienceForm";
 import { EducationForm } from "./EducationForm";
 import { SkillsForm } from "./SkillsForm";
 import { ResumePreview } from "./ResumePreview";
+import { TemplateSelector } from "./TemplateSelector";
+import { TemplateId } from "./templates";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -34,6 +36,7 @@ interface ResumeBuilderProps {
 export const ResumeBuilder = ({ onBack }: ResumeBuilderProps) => {
   const [resumeData, setResumeData] = useState<ResumeData>(defaultResumeData);
   const [showPreview, setShowPreview] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>("modern");
 
   const sections = [
     {
@@ -170,13 +173,16 @@ export const ResumeBuilder = ({ onBack }: ResumeBuilderProps) => {
           <div className={`${!showPreview ? "hidden md:block" : ""}`}>
             <Card className="card-shadow sticky top-24 overflow-hidden">
               <div className="bg-muted/50 px-4 py-3 border-b flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">Live Preview</span>
+                <TemplateSelector
+                  selectedTemplate={selectedTemplate}
+                  onSelectTemplate={setSelectedTemplate}
+                />
                 <span className="text-xs px-2 py-1 rounded-full bg-accent/20 text-accent-foreground">
                   ATS-Friendly
                 </span>
               </div>
               <ScrollArea className="h-[calc(100vh-220px)]">
-                <ResumePreview data={resumeData} />
+                <ResumePreview data={resumeData} template={selectedTemplate} />
               </ScrollArea>
             </Card>
           </div>
