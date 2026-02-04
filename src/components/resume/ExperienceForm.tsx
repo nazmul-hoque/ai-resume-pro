@@ -4,8 +4,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, Briefcase, Sparkles } from "lucide-react";
+import { Plus, Trash2, Briefcase, Sparkles, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { useAiSuggestion } from "@/hooks/useAiSuggestion";
+import { toast } from "sonner";
+import { useState } from "react";
 
 interface ExperienceFormProps {
   data: Experience[];
@@ -13,6 +16,9 @@ interface ExperienceFormProps {
 }
 
 export const ExperienceForm = ({ data, onChange }: ExperienceFormProps) => {
+  const { getSuggestion, isLoading } = useAiSuggestion();
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
   const addExperience = () => {
     const newExp: Experience = {
       id: crypto.randomUUID(),
@@ -37,6 +43,23 @@ export const ExperienceForm = ({ data, onChange }: ExperienceFormProps) => {
 
   const removeExperience = (id: string) => {
     onChange(data.filter((exp) => exp.id !== id));
+  };
+
+  const handleAiImprove = async (exp: Experience) => {
+    setLoadingId(exp.id);
+    
+    const suggestion = await getSuggestion("experience", {
+      currentText: exp.description || undefined,
+      jobTitle: exp.position || undefined,
+      company: exp.company || undefined,
+    });
+
+    if (suggestion) {
+      updateExperience(exp.id, "description", suggestion);
+      toast.success("Description improved with AI!");
+    }
+    
+    setLoadingId(null);
   };
 
   return (
@@ -132,9 +155,19 @@ export const ExperienceForm = ({ data, onChange }: ExperienceFormProps) => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>Description</Label>
-                  <Button variant="ghost" size="sm" className="gap-1 text-xs">
-                    <Sparkles className="w-3 h-3" />
-                    AI Improve
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="gap-1 text-xs"
+                    onClick={() => handleAiImprove(exp)}
+                    disabled={isLoading && loadingId === exp.id}
+                  >
+                    {isLoading && loadingId === exp.id ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3 h-3" />
+                    )}
+                    {isLoading && loadingId === exp.id ? "Improving..." : "AI Improve"}
                   </Button>
                 </div>
                 <Textarea
