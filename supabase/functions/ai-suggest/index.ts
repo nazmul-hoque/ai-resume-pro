@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 interface RequestBody {
-  type: "summary" | "experience" | "skills" | "match" | "parse" | "cover-letter";
+  type: "summary" | "experience" | "skills" | "match" | "parse" | "cover-letter" | "review";
   context: {
     jobTitle?: string;
     company?: string;
@@ -74,6 +74,74 @@ serve(async (req) => {
       "cover-letter": {
         system: `You are an expert professional writer. Write a tailored, concise (3-4 paras) cover letter based on resume and JD. Formal but enthusiastic.`,
         user: `JD: ${context.jobDescription}\nRESUME: ${JSON.stringify(context.resumeData)}`
+      },
+      review: {
+        system: `You are an experienced recruiter and hiring manager. Review the resume for a real role.
+      Output strictly valid JSON.
+      Review Logic:
+      1. Scan for 6 seconds.
+      2. Decide: Strong Yes, Maybe, or No.
+      3. Identify heatmap (high/medium/ignored sections).
+      4. List red flags.
+      5. Check ATS compatibility.
+      6. List top 5 actionable fixes.
+      7. Give confidence score (0-100).
+
+      JSON Structure:
+      {
+        "impression": "string",
+        "decision": "Strong Yes" | "Maybe" | "No",
+        "decisionReason": "string",
+        "heatmap": {
+          "high": ["string"],
+          "medium": ["string"],
+          "ignored": ["string"]
+        },
+        "redFlags": ["string"],
+        "atsCheck": {
+          "passed": boolean,
+          "issues": ["string"]
+        },
+        "fixes": ["string"],
+        "score": number,
+        "scoreReason": "string"
+      }`,
+        user: `RESUME: ${JSON.stringify(context.resumeData)}\nJOB DESCRIPTION: ${context.jobDescription || 'General Professional Role'}`
+      },
+      strategy: {
+        system: `You are an experienced recruiter and resume strategist who has reviewed thousands of resumes.
+        Your task is to determine the most effective resume template strategy for the candidate based on how recruiters actually scan resumes.
+        Optimize for: Speed of scanning (6–10 seconds), ATS compatibility, Signal-to-noise ratio, Role relevance.
+
+        Output strictly valid JSON.
+
+        JSON Structure:
+        {
+          "template": "Technical" | "Business" | "Executive" | "Academic" | "Creative" | "Fresh Graduate",
+          "explanation": "Why this template is the best recruiter-facing strategy.",
+          "scanningLogic": {
+             "first": "First section they look at",
+             "second": "Second section",
+             "confirm": "What they expect to confirm quickly",
+             "stop": "What would cause them to stop reading"
+          },
+          "sectionOrder": ["string (e.g. Summary, Skills, Experience...)"],
+          "sectionVisibility": {
+             "prominent": ["string"],
+             "deemphasized": ["string"],
+             "hidden": ["string"],
+             "reasoning": "Reasoning for visibility rules"
+          },
+          "bulletRules": {
+             "count": "Max bullets per role (e.g. '3-5')",
+             "length": "Ideal bullet length",
+             "metrics": "Required | Optional"
+          },
+          "atsSafe": boolean,
+          "score": number,
+          "scoreReason": "Confidence score reason"
+        }`,
+        user: `RESUME: ${JSON.stringify(context.resumeData)}\nJOB DESCRIPTION: ${context.jobDescription || 'General Professional Role'}`
       }
     };
 

@@ -3,18 +3,20 @@ import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 import { ResumeData } from '@/types/resume';
 import { Markdown } from './MarkdownPdfRenderer';
 
+import { PDF_THEME } from '@/config/pdf.config';
+
 const styles = StyleSheet.create({
     page: {
-        padding: '20mm',
-        fontFamily: 'Times-Roman',
+        padding: PDF_THEME.page.padding,
+        fontFamily: PDF_THEME.fonts.serif,
         fontSize: 10,
         lineHeight: 1.5,
-        color: '#333',
+        color: PDF_THEME.colors.text.secondary,
     },
     header: {
-        marginBottom: 20,
-        borderBottom: '1px solid #ccc',
-        paddingBottom: 20,
+        marginBottom: PDF_THEME.spacing.xl,
+        borderBottom: `1px solid ${PDF_THEME.colors.borderDark}`,
+        paddingBottom: PDF_THEME.spacing.xl,
         textAlign: 'center',
     },
     name: {
@@ -42,7 +44,7 @@ const styles = StyleSheet.create({
         color: '#000',
         textTransform: 'uppercase',
         marginBottom: 8,
-        borderBottom: '1px solid #ccc',
+        borderBottom: `1px solid ${PDF_THEME.colors.borderDark}`,
         paddingBottom: 2,
         letterSpacing: 1,
     },
@@ -59,12 +61,12 @@ const styles = StyleSheet.create({
     dateLocation: {
         fontSize: 9,
         fontStyle: 'italic',
-        color: '#666',
+        color: PDF_THEME.colors.text.muted,
     },
     description: {
         fontSize: 10,
         marginTop: 4,
-        color: '#333',
+        color: PDF_THEME.colors.text.secondary,
         textAlign: 'justify',
     },
     row: {

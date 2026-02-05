@@ -13,23 +13,25 @@ Font.register({
     ],
 });
 
+import { PDF_THEME } from '@/config/pdf.config';
+
 const styles = StyleSheet.create({
     page: {
-        padding: '20mm',
-        fontFamily: 'Helvetica', // Fallback to standard font for reliability
+        padding: PDF_THEME.page.padding,
+        fontFamily: PDF_THEME.fonts.body, // Fallback to standard font for reliability
         fontSize: 10,
         lineHeight: 1.5,
-        color: '#333',
+        color: PDF_THEME.colors.text.secondary,
     },
     header: {
-        marginBottom: 20,
-        borderBottom: '1px solid #eee',
-        paddingBottom: 20,
+        marginBottom: PDF_THEME.spacing.xl,
+        borderBottom: `1px solid ${PDF_THEME.colors.border}`,
+        paddingBottom: PDF_THEME.spacing.xl,
     },
     name: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#111',
+        color: PDF_THEME.colors.text.primary,
         marginBottom: 5,
         textTransform: 'uppercase',
     },
@@ -38,7 +40,7 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         gap: 15,
         fontSize: 9,
-        color: '#666',
+        color: PDF_THEME.colors.text.muted,
     },
     section: {
         marginBottom: 15,
@@ -46,11 +48,11 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 12,
         fontWeight: 'bold',
-        color: '#111',
+        color: PDF_THEME.colors.text.primary,
         textTransform: 'uppercase',
-        marginBottom: 8,
-        borderLeft: '3px solid #000',
-        paddingLeft: 8,
+        marginBottom: PDF_THEME.spacing.sm,
+        borderLeft: `3px solid ${PDF_THEME.colors.text.primary}`,
+        paddingLeft: PDF_THEME.spacing.sm,
     },
     jobTitle: {
         fontSize: 11,
@@ -63,7 +65,7 @@ const styles = StyleSheet.create({
     },
     dateLocation: {
         fontSize: 9,
-        color: '#888',
+        color: PDF_THEME.colors.text.light,
         marginBottom: 4,
     },
     description: {
@@ -78,7 +80,7 @@ const styles = StyleSheet.create({
         gap: 5,
     },
     skillItem: {
-        backgroundColor: '#f3f4f6',
+        backgroundColor: PDF_THEME.colors.background.light,
         padding: '4 8',
         borderRadius: 4,
         fontSize: 9,

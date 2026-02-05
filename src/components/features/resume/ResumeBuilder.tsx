@@ -42,6 +42,9 @@ import {
 import { JobTargeting } from "./JobTargeting";
 import { AtsHealthCheck } from "./AtsHealthCheck";
 import { ImportResume } from "./ImportResume";
+import { TemplateStrategy } from "./TemplateStrategy";
+import { RecruiterReview } from "./RecruiterReview";
+
 import { CoverLetterGenerator } from "./CoverLetterGenerator";
 import {
   DndContext,
@@ -294,7 +297,9 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
               <div className="flex items-center gap-2">
                 <ImportResume />
                 <CoverLetterGenerator />
+                <TemplateStrategy resumeData={resumeData} />
                 <JobTargeting />
+                <RecruiterReview resumeData={resumeData} />
               </div>
               <Button
                 variant="hero"

@@ -3,26 +3,28 @@ import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 import { ResumeData } from '@/types/resume';
 import { Markdown } from './MarkdownPdfRenderer';
 
-const PRIMARY_COLOR = '#8b5cf6'; // Purple-500 similar to gradient start
+import { PDF_THEME } from '@/config/pdf.config';
+
+const PRIMARY_COLOR = PDF_THEME.colors.primary;
 const TEXT_LIGHT = '#FFFFFF';
 
 const styles = StyleSheet.create({
     page: {
         padding: '0', // Full width header
-        fontFamily: 'Helvetica',
+        fontFamily: PDF_THEME.fonts.body,
         fontSize: 10,
         lineHeight: 1.5,
-        color: '#333',
-        paddingBottom: '20mm',
+        color: PDF_THEME.colors.text.secondary,
+        paddingBottom: PDF_THEME.page.padding,
     },
     header: {
         backgroundColor: PRIMARY_COLOR,
-        padding: '20mm', // Inner padding
+        padding: PDF_THEME.page.padding, // Inner padding
         color: TEXT_LIGHT,
-        marginBottom: 20,
+        marginBottom: PDF_THEME.spacing.xl,
     },
     contentContainer: {
-        paddingHorizontal: '20mm',
+        paddingHorizontal: PDF_THEME.page.padding,
     },
     name: {
         fontSize: 28,
@@ -70,8 +72,8 @@ const styles = StyleSheet.create({
     },
     dateLocation: {
         fontSize: 9,
-        color: '#666',
-        backgroundColor: '#f3f4f6',
+        color: PDF_THEME.colors.text.muted,
+        backgroundColor: PDF_THEME.colors.background.light,
         padding: '2 6',
         borderRadius: 4,
         alignSelf: 'flex-start',
@@ -89,7 +91,7 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     timelineItem: {
-        borderLeft: '1px solid #e5e7eb',
+        borderLeft: `1px solid ${PDF_THEME.colors.border}`,
         paddingLeft: 15,
         marginLeft: 3,
         marginBottom: 15,
@@ -118,11 +120,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     educationCard: {
-        backgroundColor: '#f9fafb',
+        backgroundColor: PDF_THEME.colors.background.subtle,
         padding: 10,
         borderRadius: 6,
         marginBottom: 8,
-        border: '1px solid #e5e7eb',
+        border: `1px solid ${PDF_THEME.colors.border}`,
     }
 });
 

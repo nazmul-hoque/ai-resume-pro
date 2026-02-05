@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ResumeData } from "@/types/resume";
 
-export type SuggestionType = "summary" | "experience" | "skills" | "match" | "parse" | "cover-letter";
+export type SuggestionType = "summary" | "experience" | "skills" | "match" | "parse" | "cover-letter" | "review" | "strategy";
 
 export interface JobMatchAnalysis {
     matchScore: number;
@@ -80,5 +80,19 @@ export const aiService = {
         resumeData: ResumeData
     ): Promise<string | null> {
         return this._invoke<string>("cover-letter", { jobDescription, resumeData });
+    },
+
+    async recruiterReview(
+        resumeData: ResumeData,
+        jobDescription?: string
+    ): Promise<any | null> {
+        return this._invoke<any>("review", { resumeData, jobDescription }, true);
+    },
+
+    async getTemplateStrategy(
+        resumeData: ResumeData,
+        jobDescription?: string
+    ): Promise<any | null> {
+        return this._invoke<any>("strategy", { resumeData, jobDescription }, true);
     },
 };
