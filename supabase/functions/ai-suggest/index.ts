@@ -6,13 +6,16 @@ const corsHeaders = {
 };
 
 interface RequestBody {
-  type: "summary" | "experience" | "skills";
+  type: "summary" | "experience" | "skills" | "match" | "parse" | "cover-letter";
   context: {
     jobTitle?: string;
     company?: string;
     currentText?: string;
     skills?: string[];
     yearsExperience?: number;
+    jobDescription?: string;
+    resumeData?: any;
+    rawText?: string;
   };
 }
 
@@ -30,57 +33,57 @@ serve(async (req) => {
     const { type, context }: RequestBody = await req.json();
     console.log(`AI suggestion request - type: ${type}`, context);
 
-    let systemPrompt = "";
-    let userPrompt = "";
+    const PROMPTS: Record<string, { system: string; user: string }> = {
+      summary: {
+        system: `You are an expert resume writer. 
+        Write a single, concise, impactful professional summary.
+        STRICT RULES:
+        - Use Markdown for emphasis (e.g. **keywords**) where appropriate.
+        - Provide exactly ONE version. No options, no lists.
+        - Max 2-3 sentences.
+        - Focus on unique value and ATS-friendly keywords.
+        - Output will be professionally rendered in a resume template.`,
+        user: context.currentText
+          ? `Improve this summary: "${context.currentText}"`
+          : `Write a summary for a ${context.jobTitle || 'professional'} with ${context.yearsExperience || 'several'} years exp. Skills: ${context.skills?.join(', ') || 'N/A'}.`
+      },
+      experience: {
+        system: `You are an expert resume writer. 
+        Write 3-4 impactful bullet points.
+        STRICT RULES:
+        - Use Markdown bullet points ('-') and emphasis (**bold**) for key achievements.
+        - Provide exactly ONE set of bullets.
+        - Use strong action verbs and quantifiable achievements.
+        - Output will be professionally rendered in a resume template.`,
+        user: context.currentText
+          ? `Improve this job description: "${context.currentText}"`
+          : `Write 3-4 bullet points for a ${context.jobTitle || 'professional'} role at ${context.company || 'a company'}.`
+      },
+      skills: {
+        system: `You are an expert career advisor. Suggest 8-10 relevant industry-standard skills (mix of technical and soft).`,
+        user: `Suggest skills for a ${context.jobTitle || 'professional'} role. ${context.skills?.length ? `Already have: ${context.skills.join(', ')}.` : ''} Return only names, one per line.`
+      },
+      match: {
+        system: `You are an expert ATS analyst. Analyze the match between the resume and JD. Return strictly valid JSON with matchScore, matchingKeywords, missingKeywords, and suggestions.`,
+        user: `JD: ${context.jobDescription}\nRESUME: ${JSON.stringify(context.resumeData)}`
+      },
+      parse: {
+        system: `You are an expert resume parsing engine. Extract structured data into JSON matching the required schema. Be thorough.`,
+        user: `RAW TEXT: ${context.rawText}\nReturn ONLY valid JSON.`
+      },
+      "cover-letter": {
+        system: `You are an expert professional writer. Write a tailored, concise (3-4 paras) cover letter based on resume and JD. Formal but enthusiastic.`,
+        user: `JD: ${context.jobDescription}\nRESUME: ${JSON.stringify(context.resumeData)}`
+      }
+    };
 
-    switch (type) {
-      case "summary":
-        systemPrompt = `You are an expert resume writer specializing in creating compelling professional summaries. 
-Write concise, impactful summaries that:
-- Are 2-3 sentences maximum
-- Highlight key strengths and unique value
-- Are ATS-friendly (avoid graphics, tables, or unusual formatting)
-- Use action-oriented language
-- Are tailored for the target role if provided`;
-        
-        userPrompt = context.currentText 
-          ? `Improve this professional summary to be more impactful and ATS-friendly:\n\n"${context.currentText}"\n\nMake it more compelling while keeping the core message.`
-          : `Write a professional summary for someone with ${context.yearsExperience || 'several'} years of experience${context.jobTitle ? ` as a ${context.jobTitle}` : ''}${context.skills?.length ? `. Key skills: ${context.skills.join(', ')}` : ''}.`;
-        break;
-
-      case "experience":
-        systemPrompt = `You are an expert resume writer specializing in job descriptions.
-Write impactful job descriptions that:
-- Use strong action verbs (Led, Developed, Implemented, etc.)
-- Include quantifiable achievements where possible
-- Are concise and scannable
-- Are ATS-friendly
-- Follow bullet point format with • character`;
-        
-        userPrompt = context.currentText
-          ? `Improve this job description to be more impactful with better action verbs and quantifiable achievements:\n\n"${context.currentText}"\n\nPosition: ${context.jobTitle || 'Not specified'}\nCompany: ${context.company || 'Not specified'}`
-          : `Write 3-4 bullet points for a ${context.jobTitle || 'professional'} role at ${context.company || 'a company'}. Focus on typical achievements and responsibilities.`;
-        break;
-
-      case "skills":
-        systemPrompt = `You are an expert career advisor who helps identify relevant skills for resumes.
-Suggest skills that are:
-- Relevant to the target role
-- ATS-friendly (use common industry terminology)
-- A mix of technical and soft skills
-- Specific rather than generic`;
-        
-        userPrompt = `Suggest 8-10 relevant skills for a ${context.jobTitle || 'professional'} role. 
-${context.skills?.length ? `Already listed skills: ${context.skills.join(', ')}. Suggest different ones.` : ''}
-Return only the skill names, one per line, no numbering or bullets.`;
-        break;
-
-      default:
-        throw new Error(`Unknown suggestion type: ${type}`);
+    const prompt = PROMPTS[type];
+    if (!prompt) {
+      throw new Error(`Unknown suggestion type: ${type}`);
     }
 
     console.log("Sending request to AI gateway...");
-    
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -90,8 +93,8 @@ Return only the skill names, one per line, no numbering or bullets.`;
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
+          { role: "system", content: prompt.system },
+          { role: "user", content: prompt.user },
         ],
         max_tokens: 500,
       }),
@@ -99,27 +102,20 @@ Return only the skill names, one per line, no numbering or bullets.`;
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`AI gateway error: ${response.status}`, errorText);
-      
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI usage limit reached. Please add credits to continue." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      throw new Error(`AI gateway error: ${response.status}`);
+      const status = response.status;
+      const errorMap: Record<number, string> = {
+        429: "Rate limit exceeded. Please try again in a moment.",
+        402: "AI usage limit reached. Please add credits to continue."
+      };
+
+      return new Response(
+        JSON.stringify({ error: errorMap[status] || `AI gateway error: ${status}` }),
+        { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const data = await response.json();
     const suggestion = data.choices?.[0]?.message?.content || "";
-    
-    console.log("AI suggestion generated successfully");
 
     return new Response(
       JSON.stringify({ suggestion }),

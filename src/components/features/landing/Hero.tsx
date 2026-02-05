@@ -1,47 +1,48 @@
- import { Link } from "react-router-dom";
- import { Button } from "@/components/ui/button";
- import { ArrowRight, Sparkles, FileText, CheckCircle, LogIn } from "lucide-react";
- import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Sparkles, FileText, CheckCircle, LogIn } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface HeroProps {
   onGetStarted: () => void;
+  onViewTemplates: () => void;
 }
 
- export const Hero = ({ onGetStarted }: HeroProps) => {
-   const { user, signOut, loading } = useAuth();
- 
+export const Hero = ({ onGetStarted, onViewTemplates }: HeroProps) => {
+  const { user, signOut, loading } = useAuth();
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 gradient-hero" />
-       
-       {/* Auth button */}
-       <div className="absolute top-4 right-4 z-20">
-         {!loading && (
-           user ? (
-             <Button 
-               variant="ghost" 
-               size="sm" 
-               onClick={() => signOut()}
-               className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
-             >
-               Sign Out
-             </Button>
-           ) : (
-             <Link to="/auth">
-               <Button 
-                 variant="ghost" 
-                 size="sm"
-                 className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10 gap-2"
-               >
-                 <LogIn className="w-4 h-4" />
-                 Sign In
-               </Button>
-             </Link>
-           )
-         )}
-       </div>
-      
+
+      {/* Auth button */}
+      <div className="absolute top-4 right-4 z-20">
+        {!loading && (
+          user ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => signOut()}
+              className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
+            >
+              Sign Out
+            </Button>
+          ) : (
+            <Link to="/auth">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10 gap-2"
+              >
+                <LogIn className="w-4 h-4" />
+                Sign In
+              </Button>
+            </Link>
+          )
+        )}
+      </div>
+
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-float" />
@@ -64,7 +65,7 @@ interface HeroProps {
 
           {/* Subtitle */}
           <p className="text-lg md:text-xl text-primary-foreground/70 mb-10 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            Create professional resumes that pass applicant tracking systems with our intelligent builder. 
+            Create professional resumes that pass applicant tracking systems with our intelligent builder.
             Get AI suggestions, real-time preview, and land your dream job.
           </p>
 
@@ -74,7 +75,7 @@ interface HeroProps {
               Start Building Free
               <ArrowRight className="w-5 h-5" />
             </Button>
-            <Button variant="heroOutline" size="xl">
+            <Button variant="heroOutline" size="xl" onClick={onViewTemplates}>
               <FileText className="w-5 h-5" />
               View Templates
             </Button>
@@ -87,7 +88,7 @@ interface HeroProps {
               { icon: Sparkles, text: "AI Content Suggestions" },
               { icon: FileText, text: "Real-time Preview" },
             ].map((feature, index) => (
-              <div 
+              <div
                 key={index}
                 className="flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-primary-foreground/5 border border-primary-foreground/10"
               >

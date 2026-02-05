@@ -1,5 +1,6 @@
 import { ResumeData } from "@/types/resume";
 import { TemplateId, ModernTemplate, ClassicTemplate, CreativeTemplate } from "./templates";
+import { Page } from "./Page";
 
 interface ResumePreviewProps {
   data: ResumeData;
@@ -9,11 +10,11 @@ interface ResumePreviewProps {
 export const ResumePreview = ({ data, template = "modern" }: ResumePreviewProps) => {
   const { personalInfo, summary, experience, education, skills } = data;
 
-  const hasContent = 
-    personalInfo.fullName || 
-    summary || 
-    experience.length > 0 || 
-    education.length > 0 || 
+  const hasContent =
+    personalInfo.fullName ||
+    summary ||
+    experience.length > 0 ||
+    education.length > 0 ||
     skills.length > 0;
 
   if (!hasContent) {
@@ -27,13 +28,25 @@ export const ResumePreview = ({ data, template = "modern" }: ResumePreviewProps)
     );
   }
 
-  switch (template) {
-    case "classic":
-      return <ClassicTemplate data={data} />;
-    case "creative":
-      return <CreativeTemplate data={data} />;
-    case "modern":
-    default:
-      return <ModernTemplate data={data} />;
-  }
+  const renderTemplate = () => {
+    switch (template) {
+      case "classic":
+        return <ClassicTemplate data={data} />;
+      case "creative":
+        return <CreativeTemplate data={data} />;
+      case "modern":
+      default:
+        return <ModernTemplate data={data} />;
+    }
+  };
+
+  return (
+    <div className="h-full overflow-auto bg-muted/30 p-2 sm:p-4 custom-scrollbar">
+      <div className="bg-white shadow-xl rounded-sm border border-border/50">
+        <div className="p-4 sm:p-6">
+          {renderTemplate()}
+        </div>
+      </div>
+    </div>
+  );
 };

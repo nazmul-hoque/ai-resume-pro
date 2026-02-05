@@ -20,11 +20,13 @@ const getSkillColor = (level: string) => {
   }
 };
 
+import { MarkdownRenderer } from "@/components/shared/MarkdownRenderer";
+
 export const CreativeTemplate = ({ data }: TemplateProps) => {
   const { personalInfo, summary, experience, education, skills } = data;
 
   return (
-    <div className="bg-card text-card-foreground min-h-full font-sans text-sm">
+    <div className="text-card-foreground font-sans text-sm h-full w-full max-w-full">
       {/* Header - Colorful Banner */}
       <header className="gradient-bg text-primary-foreground p-6 mb-6">
         <h1 className="text-2xl font-bold mb-2">
@@ -72,9 +74,9 @@ export const CreativeTemplate = ({ data }: TemplateProps) => {
               <div className="w-1 h-5 gradient-bg rounded-full"></div>
               <h2 className="text-sm font-bold text-foreground">About Me</h2>
             </div>
-            <p className="text-muted-foreground leading-relaxed pl-3 border-l-2 border-muted">
-              {summary}
-            </p>
+            <div className="pl-3 border-l-2 border-muted">
+              <MarkdownRenderer content={summary} className="text-muted-foreground" />
+            </div>
           </section>
         )}
 
@@ -107,9 +109,7 @@ export const CreativeTemplate = ({ data }: TemplateProps) => {
                       </span>
                     </div>
                     {exp.description && (
-                      <p className="text-muted-foreground text-xs mt-2 whitespace-pre-line">
-                        {exp.description}
-                      </p>
+                      <MarkdownRenderer content={exp.description} className="text-muted-foreground text-xs mt-1" />
                     )}
                   </div>
                 </div>
@@ -127,8 +127,8 @@ export const CreativeTemplate = ({ data }: TemplateProps) => {
             </div>
             <div className="grid gap-3 pl-3">
               {education.map((edu) => (
-                <div 
-                  key={edu.id} 
+                <div
+                  key={edu.id}
                   className="p-3 bg-muted/50 rounded-lg border border-border"
                 >
                   <div className="flex flex-wrap justify-between items-start gap-2">

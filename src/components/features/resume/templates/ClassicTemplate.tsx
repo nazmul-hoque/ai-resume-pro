@@ -10,11 +10,13 @@ const formatDate = (dateStr: string) => {
   return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 };
 
+import { MarkdownRenderer } from "@/components/shared/MarkdownRenderer";
+
 export const ClassicTemplate = ({ data }: TemplateProps) => {
   const { personalInfo, summary, experience, education, skills } = data;
 
   return (
-    <div className="bg-card text-card-foreground p-8 min-h-full font-serif text-sm">
+    <div className="text-card-foreground font-serif text-sm w-full max-w-full">
       {/* Header - Centered Classic Style */}
       <header className="text-center border-b border-border pb-6 mb-6">
         <h1 className="text-3xl font-bold text-foreground tracking-wide mb-3">
@@ -42,7 +44,7 @@ export const ClassicTemplate = ({ data }: TemplateProps) => {
           <h2 className="text-sm font-bold text-foreground border-b border-border pb-1 mb-3 tracking-wider">
             PROFESSIONAL SUMMARY
           </h2>
-          <p className="text-muted-foreground leading-relaxed text-justify">{summary}</p>
+          <MarkdownRenderer content={summary} className="text-muted-foreground text-justify" />
         </section>
       )}
 
@@ -65,9 +67,7 @@ export const ClassicTemplate = ({ data }: TemplateProps) => {
                   {exp.company}{exp.location && `, ${exp.location}`}
                 </p>
                 {exp.description && (
-                  <p className="text-muted-foreground text-xs whitespace-pre-line leading-relaxed">
-                    {exp.description}
-                  </p>
+                  <MarkdownRenderer content={exp.description} className="text-muted-foreground text-xs leading-relaxed" />
                 )}
               </div>
             ))}

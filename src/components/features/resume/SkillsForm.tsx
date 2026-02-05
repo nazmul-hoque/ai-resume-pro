@@ -1,9 +1,9 @@
-import { Skill } from "@/types/resume";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
+import { useFormContext, useFieldArray } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { Plus, X, Lightbulb, Sparkles, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -12,12 +12,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAiSuggestion } from "@/hooks/useAiSuggestion";
+import { AiEnhanceButton } from "@/components/shared/AiEnhanceButton";
 import { toast } from "sonner";
-
-interface SkillsFormProps {
-  data: Skill[];
-  onChange: (data: Skill[]) => void;
-}
+import { ResumeData, Skill } from "@/types/resume";
 
 const skillLevelColors = {
   beginner: "bg-muted text-muted-foreground",
@@ -26,25 +23,26 @@ const skillLevelColors = {
   expert: "gradient-bg text-primary-foreground",
 };
 
-export const SkillsForm = ({ data, onChange }: SkillsFormProps) => {
+export const SkillsForm = () => {
+  const { control, getValues } = useFormContext<ResumeData>();
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "skills",
+  });
+
   const [newSkill, setNewSkill] = useState("");
   const [newLevel, setNewLevel] = useState<Skill["level"]>("intermediate");
   const { getSuggestion, isLoading } = useAiSuggestion();
 
   const addSkill = () => {
     if (!newSkill.trim()) return;
-    
-    const skill: Skill = {
+
+    append({
       id: crypto.randomUUID(),
       name: newSkill.trim(),
       level: newLevel,
-    };
-    onChange([...data, skill]);
+    });
     setNewSkill("");
-  };
-
-  const removeSkill = (id: string) => {
-    onChange(data.filter((skill) => skill.id !== id));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -55,26 +53,28 @@ export const SkillsForm = ({ data, onChange }: SkillsFormProps) => {
   };
 
   const handleAiSuggest = async () => {
+    const currentSkills = getValues("skills");
     const suggestion = await getSuggestion("skills", {
-      skills: data.map(s => s.name),
+      skills: currentSkills.map(s => s.name),
     });
 
     if (suggestion) {
       const suggestedSkills = suggestion
         .split("\n")
         .map(s => s.trim())
-        .filter(s => s.length > 0 && !data.some(existing => 
+        .filter(s => s.length > 0 && !currentSkills.some(existing =>
           existing.name.toLowerCase() === s.toLowerCase()
         ));
 
-      const newSkills: Skill[] = suggestedSkills.map(name => ({
-        id: crypto.randomUUID(),
-        name,
-        level: "intermediate" as const,
-      }));
+      suggestedSkills.forEach(name => {
+        append({
+          id: crypto.randomUUID(),
+          name,
+          level: "intermediate" as const,
+        });
+      });
 
-      onChange([...data, ...newSkills]);
-      toast.success(`Added ${newSkills.length} suggested skills!`);
+      toast.success(`Added ${suggestedSkills.length} suggested skills!`);
     }
   };
 
@@ -99,27 +99,19 @@ export const SkillsForm = ({ data, onChange }: SkillsFormProps) => {
             <SelectItem value="expert">Expert</SelectItem>
           </SelectContent>
         </Select>
-        <Button onClick={addSkill} size="icon">
+        <Button onClick={addSkill} size="icon" type="button">
           <Plus className="w-4 h-4" />
         </Button>
       </div>
 
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="gap-2 w-full"
+      <AiEnhanceButton
         onClick={handleAiSuggest}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <Sparkles className="w-4 h-4" />
-        )}
-        {isLoading ? "Suggesting skills..." : "AI Suggest Skills"}
-      </Button>
+        isLoading={isLoading}
+        label="Suggest Skills"
+        className="w-full"
+      />
 
-      {data.length === 0 ? (
+      {fields.length === 0 ? (
         <div className="text-center py-8 border-2 border-dashed rounded-lg">
           <Lightbulb className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
           <p className="text-muted-foreground mb-2">No skills added yet</p>
@@ -129,16 +121,17 @@ export const SkillsForm = ({ data, onChange }: SkillsFormProps) => {
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">
-          {data.map((skill) => (
+          {fields.map((field, index) => (
             <Badge
-              key={skill.id}
+              key={field.id}
               variant="secondary"
-              className={`${skillLevelColors[skill.level]} px-3 py-1.5 text-sm flex items-center gap-2`}
+              className={`${skillLevelColors[getValues(`skills.${index}.level`)]} px-3 py-1.5 text-sm flex items-center gap-2`}
             >
-              {skill.name}
-              <span className="text-xs opacity-70 capitalize">• {skill.level}</span>
+              {getValues(`skills.${index}.name`)}
+              <span className="text-xs opacity-70 capitalize">• {getValues(`skills.${index}.level`)}</span>
               <button
-                onClick={() => removeSkill(skill.id)}
+                type="button"
+                onClick={() => remove(index)}
                 className="ml-1 hover:opacity-70 transition-opacity"
               >
                 <X className="w-3 h-3" />

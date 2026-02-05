@@ -11,11 +11,13 @@ const formatDate = (dateStr: string) => {
   return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 };
 
+import { MarkdownRenderer } from "@/components/shared/MarkdownRenderer";
+
 export const ModernTemplate = ({ data }: TemplateProps) => {
   const { personalInfo, summary, experience, education, skills } = data;
 
   return (
-    <div className="bg-card text-card-foreground p-8 min-h-full font-sans text-sm">
+    <div className="text-card-foreground font-sans text-sm w-full max-w-full">
       {/* Header */}
       <header className="border-b-2 border-foreground pb-4 mb-6">
         <h1 className="text-2xl font-bold text-foreground mb-2">
@@ -61,7 +63,7 @@ export const ModernTemplate = ({ data }: TemplateProps) => {
           <h2 className="text-sm font-bold uppercase tracking-wide text-foreground mb-2">
             Professional Summary
           </h2>
-          <p className="text-muted-foreground leading-relaxed">{summary}</p>
+          <MarkdownRenderer content={summary} className="text-muted-foreground" />
         </section>
       )}
 
@@ -87,9 +89,7 @@ export const ModernTemplate = ({ data }: TemplateProps) => {
                   </span>
                 </div>
                 {exp.description && (
-                  <p className="text-muted-foreground text-xs mt-2 whitespace-pre-line">
-                    {exp.description}
-                  </p>
+                  <MarkdownRenderer content={exp.description} className="text-muted-foreground text-xs mt-1" />
                 )}
               </div>
             ))}

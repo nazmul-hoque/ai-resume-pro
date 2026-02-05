@@ -1,3 +1,4 @@
+import React from "react";
 import { templates, TemplateId } from "./templates";
 import { cn } from "@/lib/utils";
 import { Check, Layout, FileText, Sparkles } from "lucide-react";

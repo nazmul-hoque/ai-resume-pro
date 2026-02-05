@@ -1,16 +1,6 @@
 import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { aiService, SuggestionType, SuggestionContext } from "@/services/ai.service";
 import { toast } from "sonner";
-
-type SuggestionType = "summary" | "experience" | "skills";
-
-interface SuggestionContext {
-  jobTitle?: string;
-  company?: string;
-  currentText?: string;
-  skills?: string[];
-  yearsExperience?: number;
-}
 
 export const useAiSuggestion = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -22,25 +12,10 @@ export const useAiSuggestion = () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("ai-suggest", {
-        body: { type, context },
-      });
-
-      if (error) {
-        console.error("AI suggestion error:", error);
-        toast.error("Failed to generate suggestion. Please try again.");
-        return null;
-      }
-
-      if (data?.error) {
-        toast.error(data.error);
-        return null;
-      }
-
-      return data?.suggestion || null;
-    } catch (err) {
-      console.error("AI suggestion error:", err);
-      toast.error("Failed to generate suggestion. Please try again.");
+      const suggestion = await aiService.getSuggestion(type, context);
+      return suggestion;
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate suggestion. Please try again.");
       return null;
     } finally {
       setIsLoading(false);
