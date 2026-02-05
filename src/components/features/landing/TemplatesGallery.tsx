@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { templates, TemplateId } from "../resume/templates";
 import { Layout, FileText, Sparkles, CheckCircle } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const templateIcons = {
     modern: Layout,
@@ -20,21 +21,43 @@ interface TemplatesGalleryProps {
     onSelectTemplate: (templateId: TemplateId) => void;
 }
 
+const CATEGORIES = ["All", "Tech", "Academic", "Executive", "Creative", "Fresh Graduate"];
+
 export const TemplatesGallery = ({ onSelectTemplate }: TemplatesGalleryProps) => {
+    const [activeCategory, setActiveCategory] = useState("All");
+
+    const filteredTemplates = activeCategory === "All"
+        ? templates
+        : templates.filter(t => t.tags.includes(activeCategory));
+
     return (
         <section id="templates-gallery" className="py-24 bg-background relative overflow-hidden">
             <div className="container mx-auto px-6 relative z-10">
-                <div className="text-center max-w-3xl mx-auto mb-16">
+                <div className="text-center max-w-3xl mx-auto mb-12">
                     <h2 className="font-display text-4xl md:text-5xl font-bold mb-6">
                         Choose Your <span className="gradient-text">Winning Template</span>
                     </h2>
-                    <p className="text-muted-foreground text-lg">
+                    <p className="text-muted-foreground text-lg mb-8">
                         Our templates are meticulously designed to be ATS-friendly while maintaining a professional and modern look.
                     </p>
+
+                    <Tabs defaultValue="All" className="w-full justify-center" onValueChange={setActiveCategory}>
+                        <TabsList className="flex flex-wrap h-auto gap-2 bg-transparent justify-center mb-8">
+                            {CATEGORIES.map((category) => (
+                                <TabsTrigger
+                                    key={category}
+                                    value={category}
+                                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-6 py-2 border bg-background"
+                                >
+                                    {category}
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
+                    </Tabs>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {templates.map((template) => {
+                    {filteredTemplates.map((template) => {
                         const Icon = templateIcons[template.id] || Layout;
                         const previewUrl = templatePreviews[template.id];
 
@@ -63,7 +86,16 @@ export const TemplatesGallery = ({ onSelectTemplate }: TemplatesGalleryProps) =>
                                         <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                                             <Icon className="w-5 h-5" />
                                         </div>
-                                        <h3 className="text-xl font-bold">{template.name}</h3>
+                                        <div>
+                                            <h3 className="text-xl font-bold">{template.name}</h3>
+                                            <div className="flex gap-2 mt-1">
+                                                {template.tags.slice(0, 2).map(tag => (
+                                                    <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground uppercase tracking-wider font-semibold">
+                                                        {tag}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <p className="text-muted-foreground mb-6 leading-relaxed flex-1">

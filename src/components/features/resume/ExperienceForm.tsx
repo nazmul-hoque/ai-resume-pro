@@ -10,11 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, Briefcase, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Trash2, Briefcase, Sparkles, Loader2, Wand2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useAiSuggestion } from "@/hooks/useAiSuggestion";
 import { toast } from "sonner";
 import { useState } from "react";
+import { aiService } from "@/services/ai.service";
 import { BulletPointBuilder } from "./BulletPointBuilder";
 import { ResumeData } from "@/types/resume";
 
@@ -44,6 +45,25 @@ export const ExperienceForm = () => {
     }
 
     setLoadingId(null);
+  };
+
+  const handleFixIt = async (index: number) => {
+    const exp = getValues(`experience.${index}`);
+    if (!exp.description) return;
+
+    setLoadingId(`${exp.id}-fix`);
+    try {
+      const result = await aiService.improveSection(exp.description, "Experience Description");
+      if (result?.improvedText) {
+        setValue(`experience.${index}.description`, result.improvedText, { shouldDirty: true });
+        toast.success("Description polished by AI!");
+      }
+    } catch (error) {
+      toast.error("Failed to fix description.");
+      console.error(error);
+    } finally {
+      setLoadingId(null);
+    }
   };
 
   return (
@@ -201,6 +221,21 @@ export const ExperienceForm = () => {
                       jobTitle={getValues(`experience.${index}.position`) || undefined}
                       company={getValues(`experience.${index}.company`) || undefined}
                     />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                      onClick={() => handleFixIt(index)}
+                      disabled={!!loadingId}
+                      type="button"
+                    >
+                      {loadingId === `${getValues(`experience.${index}.id`)}-fix` ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Wand2 className="w-3 h-3" />
+                      )}
+                      Fix It
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"

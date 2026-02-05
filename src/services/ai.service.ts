@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ResumeData } from "@/types/resume";
 
-export type SuggestionType = "summary" | "experience" | "skills" | "match" | "parse" | "cover-letter" | "review" | "strategy";
+export type SuggestionType = "summary" | "experience" | "skills" | "match" | "parse" | "cover-letter" | "review" | "strategy" | "improve_content";
 
 export interface JobMatchAnalysis {
     matchScore: number;
@@ -19,6 +19,7 @@ export interface SuggestionContext {
     jobDescription?: string;
     resumeData?: ResumeData;
     rawText?: string;
+    sectionType?: string;
 }
 
 export const aiService = {
@@ -94,5 +95,12 @@ export const aiService = {
         jobDescription?: string
     ): Promise<any | null> {
         return this._invoke<any>("strategy", { resumeData, jobDescription }, true);
+    },
+
+    async improveSection(
+        currentText: string,
+        sectionType: string
+    ): Promise<{ improvedText: string } | null> {
+        return this._invoke<any>("improve_content", { currentText, sectionType }, true);
     },
 };

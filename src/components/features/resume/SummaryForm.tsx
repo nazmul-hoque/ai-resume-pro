@@ -14,9 +14,33 @@ import { AiEnhanceButton } from "@/components/shared/AiEnhanceButton";
 import { toast } from "sonner";
 import { ResumeData } from "@/types/resume";
 
+import { aiService } from "@/services/ai.service";
+import { Sparkles, Loader2, Wand2 } from "lucide-react";
+import React, { useState } from "react";
+
 export const SummaryForm = () => {
   const { control, getValues, setValue } = useFormContext<ResumeData>();
   const { getSuggestion, isLoading } = useAiSuggestion();
+  const [isImproving, setIsImproving] = useState(false);
+
+  const handleImprove = async () => {
+    const currentSummary = getValues("summary");
+    if (!currentSummary) return;
+
+    setIsImproving(true);
+    try {
+      const result = await aiService.improveSection(currentSummary, "Professional Summary");
+      if (result?.improvedText) {
+        setValue("summary", result.improvedText, { shouldDirty: true });
+        toast.success("Summary polished by AI!");
+      }
+    } catch (error) {
+      toast.error("Failed to improve summary.");
+      console.error(error);
+    } finally {
+      setIsImproving(false);
+    }
+  };
 
   const handleAiEnhance = async () => {
     const currentSummary = getValues("summary");
@@ -37,10 +61,23 @@ export const SummaryForm = () => {
           <FileText className="w-4 h-4 text-muted-foreground" />
           Professional Summary
         </FormLabel>
-        <AiEnhanceButton
-          onClick={handleAiEnhance}
-          isLoading={isLoading}
-        />
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleImprove}
+            disabled={isImproving}
+            className="gap-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+            type="button"
+          >
+            {isImproving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+            Fix It For Me
+          </Button>
+          <AiEnhanceButton
+            onClick={handleAiEnhance}
+            isLoading={isLoading}
+          />
+        </div>
       </div>
 
       <FormField
