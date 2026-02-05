@@ -1,15 +1,46 @@
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, FileText, CheckCircle } from "lucide-react";
+ import { Link } from "react-router-dom";
+ import { Button } from "@/components/ui/button";
+ import { ArrowRight, Sparkles, FileText, CheckCircle, LogIn } from "lucide-react";
+ import { useAuth } from "@/contexts/AuthContext";
 
 interface HeroProps {
   onGetStarted: () => void;
 }
 
-export const Hero = ({ onGetStarted }: HeroProps) => {
+ export const Hero = ({ onGetStarted }: HeroProps) => {
+   const { user, signOut, loading } = useAuth();
+ 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 gradient-hero" />
+       
+       {/* Auth button */}
+       <div className="absolute top-4 right-4 z-20">
+         {!loading && (
+           user ? (
+             <Button 
+               variant="ghost" 
+               size="sm" 
+               onClick={() => signOut()}
+               className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
+             >
+               Sign Out
+             </Button>
+           ) : (
+             <Link to="/auth">
+               <Button 
+                 variant="ghost" 
+                 size="sm"
+                 className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10 gap-2"
+               >
+                 <LogIn className="w-4 h-4" />
+                 Sign In
+               </Button>
+             </Link>
+           )
+         )}
+       </div>
       
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
