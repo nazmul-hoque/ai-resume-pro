@@ -7,6 +7,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { MonthYearPicker } from "@/components/shared/MonthYearPicker";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, GraduationCap } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -62,90 +63,102 @@ export const EducationForm = () => {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={control}
-                  name={`education.${index}.institution`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Institution</FormLabel>
-                      <FormControl>
-                        <Input placeholder="University Name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={control}
+                    name={`education.${index}.institution`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Institution</FormLabel>
+                        <FormControl>
+                          <Input placeholder="University Name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={control}
-                  name={`education.${index}.degree`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Degree</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Bachelor's, Master's, etc." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={control}
+                    name={`education.${index}.degree`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Degree</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Bachelor's, Master's, etc." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-                <FormField
-                  control={control}
-                  name={`education.${index}.field`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Field of Study</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Computer Science" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={control}
+                    name={`education.${index}.field`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Field of Study</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Computer Science" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={control}
-                  name={`education.${index}.gpa`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>GPA (optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="3.8/4.0" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={control}
+                    name={`education.${index}.gpa`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>GPA (optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="3.8/4.0" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-                <FormField
-                  control={control}
-                  name={`education.${index}.startDate`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Date</FormLabel>
-                      <FormControl>
-                        <Input type="month" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={control}
+                    name={`education.${index}.startDate`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Start Date</FormLabel>
+                        <FormControl>
+                          <MonthYearPicker
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={control}
-                  name={`education.${index}.endDate`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End Date</FormLabel>
-                      <FormControl>
-                        <Input type="month" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={control}
+                    name={`education.${index}.endDate`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>End Date</FormLabel>
+                        <FormControl>
+                          <MonthYearPicker
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
             </Card>
           ))}

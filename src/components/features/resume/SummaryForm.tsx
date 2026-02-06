@@ -6,7 +6,7 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
+import { MarkdownEditor } from "@/components/shared/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 import { useAiSuggestion } from "@/hooks/useAiSuggestion";
@@ -86,10 +86,9 @@ export const SummaryForm = () => {
         render={({ field }) => (
           <FormItem>
             <FormControl>
-              <Textarea
+              <MarkdownEditor
                 placeholder="Write a compelling 2-3 sentence summary highlighting your experience, skills, and career goals..."
                 {...field}
-                className="min-h-[120px] resize-none"
               />
             </FormControl>
             <FormMessage />

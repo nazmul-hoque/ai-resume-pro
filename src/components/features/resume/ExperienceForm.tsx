@@ -8,9 +8,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { MarkdownEditor } from "@/components/shared/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, Briefcase, Sparkles, Loader2, Wand2 } from "lucide-react";
+import { Plus, Trash2, Briefcase, Sparkles, Loader2, Wand2, Calendar } from "lucide-react";
+import { MonthYearPicker } from "@/components/shared/MonthYearPicker";
 import { Card } from "@/components/ui/card";
 import { useAiSuggestion } from "@/hooks/useAiSuggestion";
 import { toast } from "sonner";
@@ -110,101 +112,107 @@ export const ExperienceForm = () => {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={control}
-                  name={`experience.${index}.company`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Company Name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={control}
+                    name={`experience.${index}.company`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Company</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Company Name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={control}
-                  name={`experience.${index}.position`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Position</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Job Title" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={control}
+                    name={`experience.${index}.position`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Position</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Job Title" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-                <FormField
-                  control={control}
-                  name={`experience.${index}.location`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Location</FormLabel>
-                      <FormControl>
-                        <Input placeholder="City, Country" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={control}
+                    name={`experience.${index}.location`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Location</FormLabel>
+                        <FormControl>
+                          <Input placeholder="City, Country" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <div className="space-y-2">
-                  <div className="flex items-center gap-4">
-                    <FormField
-                      control={control}
-                      name={`experience.${index}.startDate`}
-                      render={({ field }) => (
-                        <FormItem className="flex-1">
-                          <FormLabel>Start Date</FormLabel>
-                          <FormControl>
-                            <Input type="month" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <FormField
+                    control={control}
+                    name={`experience.${index}.startDate`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Start Date</FormLabel>
+                        <FormControl>
+                          <MonthYearPicker
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select Start Date"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="space-y-2">
                     <FormField
                       control={control}
                       name={`experience.${index}.endDate`}
                       render={({ field }) => (
-                        <FormItem className="flex-1">
+                        <FormItem>
                           <FormLabel>End Date</FormLabel>
                           <FormControl>
-                            <Input
-                              type="month"
-                              {...field}
+                            <MonthYearPicker
+                              value={field.value}
+                              onChange={field.onChange}
                               disabled={getValues(`experience.${index}.current`)}
+                              placeholder="Select End Date"
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
-                  <FormField
-                    control={control}
-                    name={`experience.${index}.current`}
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 mt-2">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel className="text-sm cursor-pointer">
+                    <FormField
+                      control={control}
+                      name={`experience.${index}.current`}
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-2 space-y-0 mt-2">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="text-xs text-muted-foreground font-normal cursor-pointer leading-none">
                             I currently work here
                           </FormLabel>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -259,7 +267,7 @@ export const ExperienceForm = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Textarea
+                        <MarkdownEditor
                           placeholder="Describe your responsibilities and achievements..."
                           {...field}
                           className="min-h-[100px]"

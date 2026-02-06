@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 interface RequestBody {
-  type: "summary" | "experience" | "skills" | "match" | "parse" | "cover-letter" | "review";
+  type: "summary" | "experience" | "skills" | "match" | "parse" | "cover-letter" | "review" | "strategy" | "improve_content";
   context: {
     jobTitle?: string;
     company?: string;
@@ -16,6 +16,7 @@ interface RequestBody {
     jobDescription?: string;
     resumeData?: any;
     rawText?: string;
+    sectionType?: string;
   };
 }
 
@@ -39,10 +40,9 @@ serve(async (req) => {
         Write a single, concise, impactful professional summary.
         STRICT RULES:
         - Use Markdown for emphasis (e.g. **keywords**) where appropriate.
-        - Provide exactly ONE version. No options, no lists.
+        - Output exactly ONE version. No options, no lists.
         - Max 2-3 sentences.
-        - Focus on unique value and ATS-friendly keywords.
-        - Output will be professionally rendered in a resume template.`,
+        - Focus on unique value and ATS-friendly keywords.`,
         user: context.currentText
           ? `Improve this summary: "${context.currentText}"`
           : `Write a summary for a ${context.jobTitle || 'professional'} with ${context.yearsExperience || 'several'} years exp. Skills: ${context.skills?.join(', ') || 'N/A'}.`
@@ -53,8 +53,7 @@ serve(async (req) => {
         STRICT RULES:
         - Use Markdown bullet points ('-') and emphasis (**bold**) for key achievements.
         - Provide exactly ONE set of bullets.
-        - Use strong action verbs and quantifiable achievements.
-        - Output will be professionally rendered in a resume template.`,
+        - Use strong action verbs and quantifiable achievements.`,
         user: context.currentText
           ? `Improve this job description: "${context.currentText}"`
           : `Write 3-4 bullet points for a ${context.jobTitle || 'professional'} role at ${context.company || 'a company'}.`
@@ -142,6 +141,13 @@ serve(async (req) => {
           "scoreReason": "Confidence score reason"
         }`,
         user: `RESUME: ${JSON.stringify(context.resumeData)}\nJOB DESCRIPTION: ${context.jobDescription || 'General Professional Role'}`
+      },
+      improve_content: {
+        system: `You are a professional resume writer. Rewrite the provided text to be more professional, action-oriented, and impactful. 
+        Use strong action verbs. Quantify achievements where possible (add placeholders like [X] if needed but prefer polishing existing numbers).
+        Keep it concise and suited for a resume. Return ONLY the rewritten text, no other commentary.
+        Output strictly valid JSON: { "improvedText": "string" }`,
+        user: `Original Text: "${context.currentText}"\nSection Type: ${context.sectionType || "General"}`
       }
     };
 
@@ -164,7 +170,7 @@ serve(async (req) => {
           { role: "system", content: prompt.system },
           { role: "user", content: prompt.user },
         ],
-        max_tokens: 500,
+        max_tokens: 2000,
       }),
     });
 
