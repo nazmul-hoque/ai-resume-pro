@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SkeletonList } from "@/components/ui/skeleton-card";
 
 interface SavedResumesProps {
   onSelectResume: (resume: Resume) => void;
@@ -60,14 +61,21 @@ export const SavedResumes = ({ onSelectResume, onCreateNew }: SavedResumesProps)
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold font-display">Your Resumes</h2>
+          <Button onClick={onCreateNew} size="sm" className="gap-2">
+            <Plus className="w-4 h-4" />
+            New Resume
+          </Button>
+        </div>
+        <SkeletonList count={3} />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold font-display">Your Resumes</h2>
         <Button onClick={onCreateNew} size="sm" className="gap-2">
@@ -79,10 +87,11 @@ export const SavedResumes = ({ onSelectResume, onCreateNew }: SavedResumesProps)
       {resumes && resumes.length > 0 ? (
         <ScrollArea className="h-[400px]">
           <div className="grid gap-3">
-            {resumes.map((resume) => (
+            {resumes.map((resume, index) => (
               <Card
                 key={resume.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="cursor-pointer card-interactive animate-slide-up"
+                style={{ animationDelay: `${index * 0.05}s` }}
                 onClick={() => onSelectResume(resume)}
               >
                 <CardHeader className="p-4 pb-2">

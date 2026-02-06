@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ResumeData, defaultResumeData, ResumeDataSchema } from "@/types/resume";
@@ -16,14 +16,22 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePdfExport } from "@/hooks/usePdfExport";
 import { useCreateResume, useUpdateResume, Resume } from "@/hooks/useResumes";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAutoSave } from "@/hooks/useAutoSave";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { ProgressSteps } from "@/components/ui/progress-steps";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   User,
   FileText,
@@ -37,14 +45,14 @@ import {
   Loader2,
   Save,
   Check,
-  Target,
+  Cloud,
+  CloudOff,
 } from "lucide-react";
 import { JobTargeting } from "./JobTargeting";
 import { AtsHealthCheck } from "./AtsHealthCheck";
 import { ImportResume } from "./ImportResume";
 import { TemplateStrategy } from "./TemplateStrategy";
 import { RecruiterReview } from "./RecruiterReview";
-
 import { CoverLetterGenerator } from "./CoverLetterGenerator";
 import {
   DndContext,
@@ -64,15 +72,17 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SortableSectionProps {
   id: string;
   icon: any;
   title: string;
   component: React.ReactNode;
+  isComplete: boolean;
 }
 
-const SortableAccordionItem = ({ id, icon: Icon, title, component }: SortableSectionProps) => {
+const SortableAccordionItem = ({ id, icon: Icon, title, component, isComplete }: SortableSectionProps) => {
   const {
     attributes,
     listeners,
@@ -91,10 +101,14 @@ const SortableAccordionItem = ({ id, icon: Icon, title, component }: SortableSec
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="mb-4">
+    <div ref={setNodeRef} style={style} className="mb-4 animate-fade-in">
       <AccordionItem
         value={id}
-        className="border rounded-lg px-4 data-[state=open]:bg-muted/30 relative"
+        className={cn(
+          "border rounded-lg px-4 transition-all duration-300",
+          "data-[state=open]:bg-muted/30 data-[state=open]:shadow-sm",
+          "hover:border-primary/30"
+        )}
       >
         <div className="flex items-center gap-2">
           <div {...attributes} {...listeners} className="cursor-grab hover:bg-muted p-1 rounded-md transition-colors shrink-0">
@@ -102,14 +116,23 @@ const SortableAccordionItem = ({ id, icon: Icon, title, component }: SortableSec
           </div>
           <AccordionTrigger className="flex-1 hover:no-underline py-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Icon className="w-4 h-4 text-primary" />
+              <div className={cn(
+                "p-2 rounded-lg transition-colors duration-300",
+                isComplete ? "bg-primary/20" : "bg-primary/10"
+              )}>
+                <Icon className={cn(
+                  "w-4 h-4 transition-colors duration-300",
+                  isComplete ? "text-primary" : "text-primary/70"
+                )} />
               </div>
               <span className="font-semibold">{title}</span>
+              {isComplete && (
+                <Check className="w-4 h-4 text-primary animate-scale-in" />
+              )}
             </div>
           </AccordionTrigger>
         </div>
-        <AccordionContent className="pt-2 pb-6">
+        <AccordionContent className="pt-2 pb-6 animate-fade-in">
           {component}
         </AccordionContent>
       </AccordionItem>
@@ -134,14 +157,40 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
   );
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [openSections, setOpenSections] = useState<string[]>(["personal"]);
 
   const methods = useForm<ResumeData>({
     resolver: zodResolver(ResumeDataSchema),
     defaultValues: initialResume?.data || defaultResumeData,
+    mode: "onChange", // Enable real-time validation
   });
 
-  const { watch, handleSubmit, formState: { isDirty }, setValue } = methods;
+  const { watch, handleSubmit, formState: { isDirty, errors }, setValue } = methods;
   const resumeData = watch();
+
+  // Calculate section completion
+  const sectionCompletion = useMemo(() => {
+    const personal = !!(
+      resumeData.personalInfo?.fullName &&
+      resumeData.personalInfo?.email
+    );
+    const summary = !!(resumeData.summary && resumeData.summary.length > 20);
+    const experience = resumeData.experience?.length > 0 &&
+      resumeData.experience.some(e => e.company && e.position);
+    const education = resumeData.education?.length > 0 &&
+      resumeData.education.some(e => e.institution && e.degree);
+    const skills = resumeData.skills?.length >= 3;
+
+    return { personal, summary, experience, education, skills };
+  }, [resumeData]);
+
+  const progressSteps = useMemo(() => [
+    { id: "personal", label: "Personal", isComplete: sectionCompletion.personal, isActive: openSections.includes("personal") },
+    { id: "summary", label: "Summary", isComplete: sectionCompletion.summary, isActive: openSections.includes("summary") },
+    { id: "experience", label: "Experience", isComplete: sectionCompletion.experience, isActive: openSections.includes("experience") },
+    { id: "education", label: "Education", isComplete: sectionCompletion.education, isActive: openSections.includes("education") },
+    { id: "skills", label: "Skills", isComplete: sectionCompletion.skills, isActive: openSections.includes("skills") },
+  ], [sectionCompletion, openSections]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -165,7 +214,7 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
   const createResume = useCreateResume();
   const updateResume = useUpdateResume();
 
-  // Track changes (both internal form changes and external state like title/template)
+  // Track changes
   useEffect(() => {
     const isActuallyDirty = isDirty ||
       resumeTitle !== (initialResume?.title || "Untitled Resume") ||
@@ -210,6 +259,20 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
 
   const handleSave = handleSubmit(onSave);
 
+  // Auto-save functionality
+  const autoSaveHandler = useCallback(async () => {
+    if (!user) return;
+    const data = methods.getValues();
+    await onSave(data);
+  }, [user, methods, onSave]);
+
+  useAutoSave({
+    onSave: autoSaveHandler,
+    delay: 30000, // 30 seconds
+    enabled: !!user && !!resumeId,
+    hasChanges: hasUnsavedChanges,
+  });
+
   const isSaving = createResume.isPending || updateResume.isPending;
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -224,165 +287,199 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
   };
 
   const sectionConfig = {
-    personal: { icon: User, title: "Personal Information", component: <PersonalInfoForm /> },
-    summary: { icon: FileText, title: "Professional Summary", component: <SummaryForm /> },
-    experience: { icon: Briefcase, title: "Work Experience", component: <ExperienceForm /> },
-    education: { icon: GraduationCap, title: "Education", component: <EducationForm /> },
-    skills: { icon: Lightbulb, title: "Skills", component: <SkillsForm /> },
+    personal: { icon: User, title: "Personal Information", component: <PersonalInfoForm />, isComplete: sectionCompletion.personal },
+    summary: { icon: FileText, title: "Professional Summary", component: <SummaryForm />, isComplete: sectionCompletion.summary },
+    experience: { icon: Briefcase, title: "Work Experience", component: <ExperienceForm />, isComplete: sectionCompletion.experience },
+    education: { icon: GraduationCap, title: "Education", component: <EducationForm />, isComplete: sectionCompletion.education },
+    skills: { icon: Lightbulb, title: "Skills", component: <SkillsForm />, isComplete: sectionCompletion.skills },
   };
 
   const currentOrder = resumeData.sectionOrder || defaultResumeData.sectionOrder || [];
 
   return (
     <FormProvider {...methods}>
-      <div className="min-h-screen bg-background">
-        {/* Header code omitted for brevity in this tool call, but I will keep it in the real file */}
-        {/* Header */}
-        <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-lg">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
-                <ArrowLeft className="w-4 h-4" />
-                Back
-              </Button>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={resumeTitle}
-                  onChange={(e) => setResumeTitle(e.target.value)}
-                  className="font-display font-bold text-xl border-0 bg-transparent p-0 h-auto focus-visible:ring-0 w-48"
-                  placeholder="Resume title"
-                />
-                {lastSaved && !hasUnsavedChanges && (
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Check className="w-3 h-3" /> Saved
-                  </span>
-                )}
+      <TooltipProvider>
+        <div className="min-h-screen bg-background">
+          {/* Header */}
+          <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-lg">
+            <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">Back</span>
+                </Button>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={resumeTitle}
+                    onChange={(e) => setResumeTitle(e.target.value)}
+                    className="font-display font-bold text-lg border-0 bg-transparent p-0 h-auto focus-visible:ring-0 w-40 md:w-48"
+                    placeholder="Resume title"
+                  />
+                  {/* Save status indicator */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center">
+                        {isSaving ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                        ) : hasUnsavedChanges ? (
+                          <CloudOff className="w-4 h-4 text-amber-500" />
+                        ) : lastSaved ? (
+                          <Cloud className="w-4 h-4 text-primary" />
+                        ) : null}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {isSaving ? "Saving..." : hasUnsavedChanges ? "Unsaved changes" : lastSaved ? "All changes saved" : ""}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {user && (
+              <div className="flex items-center gap-2">
+                {user && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={handleSave}
+                    disabled={isSaving || !hasUnsavedChanges}
+                  >
+                    {isSaving ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    <span className="hidden sm:inline">{isSaving ? "Saving..." : "Save"}</span>
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-2"
-                  onClick={handleSave}
-                  disabled={isSaving || !hasUnsavedChanges}
+                  className="md:hidden gap-2"
+                  onClick={() => setShowPreview(!showPreview)}
                 >
-                  {isSaving ? (
+                  {showPreview ? (
+                    <>
+                      <Edit3 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Edit</span>
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-4 h-4" />
+                      <span className="hidden sm:inline">Preview</span>
+                    </>
+                  )}
+                </Button>
+                <div className="hidden lg:flex items-center gap-2">
+                  <ImportResume />
+                  <CoverLetterGenerator />
+                  <TemplateStrategy resumeData={resumeData} />
+                  <JobTargeting />
+                  <RecruiterReview resumeData={resumeData} />
+                </div>
+                <Button
+                  variant="hero"
+                  size="sm"
+                  className="gap-2"
+                  onClick={handleDownloadPdf}
+                  disabled={isExporting}
+                >
+                  {isExporting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <Save className="w-4 h-4" />
+                    <Download className="w-4 h-4" />
                   )}
-                  {isSaving ? "Saving..." : "Save"}
+                  <span className="hidden sm:inline">{isExporting ? "Exporting..." : "Download"}</span>
                 </Button>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                className="md:hidden gap-2"
-                onClick={() => setShowPreview(!showPreview)}
-              >
-                {showPreview ? (
-                  <>
-                    <Edit3 className="w-4 h-4" />
-                    Edit
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-4 h-4" />
-                    Preview
-                  </>
-                )}
-              </Button>
-              <div className="flex items-center gap-2">
-                <ImportResume />
-                <CoverLetterGenerator />
-                <TemplateStrategy resumeData={resumeData} />
-                <JobTargeting />
-                <RecruiterReview resumeData={resumeData} />
               </div>
-              <Button
-                variant="hero"
-                size="sm"
-                className="gap-2"
-                onClick={handleDownloadPdf}
-                disabled={isExporting}
-              >
-                {isExporting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Download className="w-4 h-4" />
-                )}
-                {isExporting ? "Exporting..." : "Download PDF"}
-              </Button>
+            </div>
+          </header>
+
+          {/* Main Content */}
+          <div className="container mx-auto px-4 py-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Editor Panel */}
+              <div className={`${showPreview ? "hidden md:block" : ""}`}>
+                <Card className="card-shadow">
+                  {/* Progress indicator */}
+                  <div className="p-4 border-b">
+                    <ProgressSteps steps={progressSteps} />
+                  </div>
+                  
+                  <ScrollArea className="h-[calc(100vh-260px)]">
+                    <div className="p-6">
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <SortableContext
+                          items={currentOrder}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          <Accordion 
+                            type="multiple" 
+                            value={openSections}
+                            onValueChange={setOpenSections}
+                            className="space-y-4"
+                          >
+                            {currentOrder.map((sectionId) => {
+                              const config = sectionConfig[sectionId as keyof typeof sectionConfig];
+                              if (!config) return null;
+                              return (
+                                <SortableAccordionItem
+                                  key={sectionId}
+                                  id={sectionId}
+                                  icon={config.icon}
+                                  title={config.title}
+                                  component={config.component}
+                                  isComplete={config.isComplete}
+                                />
+                              );
+                            })}
+                          </Accordion>
+                        </SortableContext>
+                      </DndContext>
+                    </div>
+                  </ScrollArea>
+                </Card>
+              </div>
+
+              {/* Preview Panel */}
+              <div className={`${!showPreview ? "hidden md:block" : ""}`}>
+                <Card className="card-shadow sticky top-24 overflow-hidden">
+                  <div className="bg-muted/50 px-4 py-3 border-b flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <TemplateSelector
+                        selectedTemplate={selectedTemplate}
+                        onSelectTemplate={setSelectedTemplate}
+                      />
+                      <AtsHealthCheck />
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded-full bg-accent/20 text-accent-foreground">
+                      ATS-Friendly
+                    </span>
+                  </div>
+                  <ScrollArea className="h-[calc(100vh-220px)]">
+                    <div ref={previewRef} className="animate-fade-in">
+                      <ResumePreview data={resumeData} template={selectedTemplate} />
+                    </div>
+                  </ScrollArea>
+                </Card>
+              </div>
             </div>
           </div>
-        </header>
-
-        {/* Main Content */}
-        <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Editor Panel */}
-            <div className={`${showPreview ? "hidden md:block" : ""}`}>
-              <Card className="card-shadow">
-                <ScrollArea className="h-[calc(100vh-160px)]">
-                  <div className="p-6">
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleDragEnd}
-                    >
-                      <SortableContext
-                        items={currentOrder}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        <Accordion type="multiple" defaultValue={["personal"]} className="space-y-4">
-                          {currentOrder.map((sectionId) => {
-                            const config = sectionConfig[sectionId as keyof typeof sectionConfig];
-                            if (!config) return null;
-                            return (
-                              <SortableAccordionItem
-                                key={sectionId}
-                                id={sectionId}
-                                icon={config.icon}
-                                title={config.title}
-                                component={config.component}
-                              />
-                            );
-                          })}
-                        </Accordion>
-                      </SortableContext>
-                    </DndContext>
-                  </div>
-                </ScrollArea>
-              </Card>
-            </div>
-
-            {/* Preview Panel */}
-            <div className={`${!showPreview ? "hidden md:block" : ""}`}>
-              <Card className="card-shadow sticky top-24 overflow-hidden">
-                <div className="bg-muted/50 px-4 py-3 border-b flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <TemplateSelector
-                      selectedTemplate={selectedTemplate}
-                      onSelectTemplate={setSelectedTemplate}
-                    />
-                    <AtsHealthCheck />
-                  </div>
-                  <span className="text-xs px-2 py-1 rounded-full bg-accent/20 text-accent-foreground">
-                    ATS-Friendly
-                  </span>
-                </div>
-                <ScrollArea className="h-[calc(100vh-220px)]">
-                  <div ref={previewRef}>
-                    <ResumePreview data={resumeData} template={selectedTemplate} />
-                  </div>
-                </ScrollArea>
-              </Card>
+          
+          {/* Mobile action bar */}
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-card/95 backdrop-blur-lg border-t z-40">
+            <div className="flex items-center justify-around gap-2">
+              <ImportResume />
+              <CoverLetterGenerator />
+              <JobTargeting />
+              <RecruiterReview resumeData={resumeData} />
             </div>
           </div>
         </div>
-      </div>
+      </TooltipProvider>
     </FormProvider>
   );
 };
