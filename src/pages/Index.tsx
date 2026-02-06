@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { TemplatesGallery } from "@/components/features/landing/TemplatesGallery";
+import { Footer } from "@/components/features/landing/Footer";
 import { TemplateId } from "@/components/features/resume/templates";
 
 const Index = () => {
@@ -108,6 +109,7 @@ const Index = () => {
     <div className="min-h-screen">
       <Hero onGetStarted={handleGetStarted} onViewTemplates={handleViewTemplates} />
       <TemplatesGallery onSelectTemplate={handleSelectTemplate} />
+      <Footer />
     </div>
   );
 };
