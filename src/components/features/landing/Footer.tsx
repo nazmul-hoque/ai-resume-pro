@@ -1,5 +1,6 @@
 import { FileText, Github, Linkedin, Twitter, Mail, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -17,7 +18,7 @@ export const Footer = () => {
               <span className="font-display font-bold text-xl">ResumeAI</span>
             </div>
             <p className="text-muted-foreground text-sm max-w-md">
-              Build professional, ATS-optimized resumes with AI-powered suggestions. 
+              Build professional, ATS-optimized resumes with AI-powered suggestions.
               Land your dream job with a resume that stands out.
             </p>
             <div className="flex items-center gap-2">
@@ -68,14 +69,14 @@ export const Footer = () => {
             <h4 className="font-semibold text-foreground">Resources</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/tips" className="text-muted-foreground hover:text-primary transition-colors">
                   Resume Tips
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/advice" className="text-muted-foreground hover:text-primary transition-colors">
                   Career Advice
-                </a>
+                </Link>
               </li>
               <li>
                 <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
@@ -83,9 +84,9 @@ export const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/help" className="text-muted-foreground hover:text-primary transition-colors">
                   Help Center
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -97,13 +98,13 @@ export const Footer = () => {
             © {currentYear} ResumeAI. Made with <Heart className="w-3 h-3 text-destructive fill-destructive" /> for job seekers.
           </p>
           <div className="flex items-center gap-6 text-sm">
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+            <Link to="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
               Privacy Policy
-            </a>
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+            </Link>
+            <Link to="/terms" className="text-muted-foreground hover:text-primary transition-colors">
               Terms of Service
-            </a>
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+            </Link>
+            <a href="mailto:support@resumeai.pro" className="text-muted-foreground hover:text-primary transition-colors">
               Contact
             </a>
           </div>

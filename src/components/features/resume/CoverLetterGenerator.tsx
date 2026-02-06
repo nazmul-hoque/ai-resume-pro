@@ -11,13 +11,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Mail, Loader2, Sparkles, Copy, Check } from "lucide-react";
+import { Mail, Loader2, Sparkles, Copy, Check, Briefcase } from "lucide-react";
 import { aiService } from "@/services/ai.service";
 import { ResumeData } from "@/types/resume";
 import { toast } from "sonner";
+import { SaveApplicationModal } from "../applications/SaveApplicationModal";
 
 export const CoverLetterGenerator = () => {
     const [isOpen, setIsOpen] = useState(false);
+    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const [jobDescription, setJobDescription] = useState("");
     const [generatedLetter, setGeneratedLetter] = useState("");
     const [isGenerating, setIsGenerating] = useState(false);
@@ -115,15 +117,29 @@ export const CoverLetterGenerator = () => {
                                 >
                                     Start Over
                                 </Button>
-                                <Button onClick={handleCopy} className="gap-2 flex-1">
+                                <Button onClick={handleCopy} className="gap-2">
                                     {isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                                    {isCopied ? "Copied!" : "Copy to Clipboard"}
+                                    {isCopied ? "Copied!" : "Copy"}
+                                </Button>
+                                <Button
+                                    onClick={() => setIsSaveModalOpen(true)}
+                                    className="gap-2 flex-1 bg-primary hover:bg-primary/90"
+                                >
+                                    <Briefcase className="w-4 h-4" />
+                                    Save to Application Tracker
                                 </Button>
                             </div>
                         </div>
                     )}
                 </div>
             </DialogContent>
+
+            <SaveApplicationModal
+                isOpen={isSaveModalOpen}
+                onClose={() => setIsSaveModalOpen(false)}
+                coverLetter={generatedLetter}
+                resumeData={getValues()}
+            />
         </Dialog>
     );
 };

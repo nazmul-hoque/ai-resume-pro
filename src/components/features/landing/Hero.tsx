@@ -1,14 +1,15 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, FileText, CheckCircle, LogIn } from "lucide-react";
+import { ArrowRight, Sparkles, FileText, CheckCircle, LogIn, Briefcase } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface HeroProps {
   onGetStarted: () => void;
   onViewTemplates: () => void;
+  onViewApplications?: () => void;
 }
 
-export const Hero = ({ onGetStarted, onViewTemplates }: HeroProps) => {
+export const Hero = ({ onGetStarted, onViewTemplates, onViewApplications }: HeroProps) => {
   const { user, signOut, loading } = useAuth();
 
   return (
@@ -72,13 +73,20 @@ export const Hero = ({ onGetStarted, onViewTemplates }: HeroProps) => {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-slide-up" style={{ animationDelay: '0.2s' }}>
             <Button variant="hero" size="xl" onClick={onGetStarted}>
-              Start Building Free
+              {user ? "Manage My Resumes" : "Start Building Free"}
               <ArrowRight className="w-5 h-5" />
             </Button>
-            <Button variant="heroOutline" size="xl" onClick={onViewTemplates}>
-              <FileText className="w-5 h-5" />
-              View Templates
-            </Button>
+            {onViewApplications ? (
+              <Button variant="heroOutline" size="xl" onClick={onViewApplications} className="gap-2">
+                <Briefcase className="w-5 h-5" />
+                Tracked Applications
+              </Button>
+            ) : (
+              <Button variant="heroOutline" size="xl" onClick={onViewTemplates}>
+                <FileText className="w-5 h-5" />
+                View Templates
+              </Button>
+            )}
           </div>
 
           {/* Features */}
