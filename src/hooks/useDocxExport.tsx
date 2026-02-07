@@ -10,7 +10,8 @@ import {
     TableRow,
     TableCell,
     WidthType,
-    convertInchesToTwip
+    convertInchesToTwip,
+    LineRuleType
 } from "docx";
 import { saveAs } from "file-saver";
 import { ResumeData } from "@/types/resume";
@@ -48,13 +49,14 @@ export const useDocxExport = (options: UseDocxExportOptions = {}) => {
                 sectionAlignment: AlignmentType.LEFT,
                 sectionHeaderColor: isCreative ? "2563EB" : "000000",
                 headingSize: 26, // 13pt
-                bodySize: 22, // 11pt - slightly larger for better readability
+                bodySize: 22, // 11pt
                 nameSize: 56, // 28pt
                 subheadingSize: 24, // 12pt
                 headerUppercase: isClassic || templateId === "modern",
-                lineSpacing: 276, // 1.15 line spacing (standard readable spacing)
-                paragraphSpacing: 160, // 8pt gap between paragraphs
-                bulletSpacing: 120, // 6pt gap for bullet items
+                // Use exact point values for spacing (20 twips = 1pt)
+                lineSpacingPts: 14, // 14pt line height for 11pt text (good readable spacing)
+                paragraphSpacingPts: 6, // 6pt after paragraphs
+                bulletSpacingPts: 4, // 4pt after bullets
             };
 
             // Formatting helper
@@ -108,8 +110,9 @@ export const useDocxExport = (options: UseDocxExportOptions = {}) => {
                             children: parseFormatting(content, { size }),
                             bullet: isBullet ? { level: 0 } : undefined,
                             spacing: { 
-                                after: isBullet ? theme.bulletSpacing : theme.paragraphSpacing, 
-                                line: theme.lineSpacing 
+                                after: (isBullet ? theme.bulletSpacingPts : theme.paragraphSpacingPts) * 20, // Convert pt to twips
+                                line: theme.lineSpacingPts * 20, // Convert pt to twips
+                                lineRule: LineRuleType.EXACT
                             },
                             alignment: AlignmentType.LEFT,
                             indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
@@ -374,7 +377,7 @@ export const useDocxExport = (options: UseDocxExportOptions = {}) => {
                                 children: [
                                     new TextRun({ text: skills.map(s => s.name).join(" • "), font: theme.font, size: theme.bodySize })
                                 ],
-                                spacing: { after: 300, line: theme.lineSpacing },
+                                spacing: { after: 300, line: theme.lineSpacingPts * 20, lineRule: LineRuleType.EXACT },
                                 indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
                             }),
                         ] : []),
