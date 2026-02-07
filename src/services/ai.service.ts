@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ResumeData } from "@/types/resume";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 
 export type SuggestionType = "summary" | "experience" | "skills" | "match" | "parse" | "cover-letter" | "review" | "strategy" | "improve_content";
 
@@ -34,6 +35,11 @@ async function invokeAI<T = string>(
 
         if (error) {
             console.error(`AI ${type} error:`, error);
+            if (error instanceof FunctionsHttpError) {
+                const errorMessage = await error.context.json();
+                console.log("Function returned an error", errorMessage);
+                throw new Error(errorMessage.error || "AI service failed");
+            }
             throw error;
         }
 

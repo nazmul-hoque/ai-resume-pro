@@ -75,7 +75,7 @@ serve(async (req) => {
         - Output exactly ONE version. No options, no lists.
         - Max 2-3 sentences.
         - Focus on unique value and ATS-friendly keywords.`,
-        user: context.currentText
+        user: context.currentText?.trim()
           ? `Improve this summary: "${context.currentText}"`
           : `Write a summary for a ${context.jobTitle || 'professional'} with ${context.yearsExperience || 'several'} years exp. Skills: ${context.skills?.join(', ') || 'N/A'}.`
       },
@@ -86,7 +86,7 @@ serve(async (req) => {
         - Use Markdown bullet points ('-') and emphasis (**bold**) for key achievements.
         - Provide exactly ONE set of bullets.
         - Use strong action verbs and quantifiable achievements.`,
-        user: context.currentText
+        user: context.currentText?.trim()
           ? `Improve this job description: "${context.currentText}"`
           : `Write 3-4 bullet points for a ${context.jobTitle || 'professional'} role at ${context.company || 'a company'}.`
       },
@@ -96,15 +96,15 @@ serve(async (req) => {
       },
       match: {
         system: `You are an expert ATS analyst. Analyze the match between the resume and JD. Return strictly valid JSON with matchScore, matchingKeywords, missingKeywords, and suggestions.`,
-        user: `JD: ${context.jobDescription}\nRESUME: ${JSON.stringify(context.resumeData)}`
+        user: `JD: ${context.jobDescription || "No job description provided"}\nRESUME: ${JSON.stringify(context.resumeData || {})}`
       },
       parse: {
         system: `You are an expert resume parsing engine. Extract structured data into JSON matching the required schema. Be thorough.`,
-        user: `RAW TEXT: ${context.rawText}\nReturn ONLY valid JSON.`
+        user: `RAW TEXT: ${context.rawText || "No text provided"}\nReturn ONLY valid JSON.`
       },
       "cover-letter": {
         system: `You are an expert professional writer. Write a tailored, concise (3-4 paras) cover letter based on resume and JD. Formal but enthusiastic.`,
-        user: `JD: ${context.jobDescription}\nRESUME: ${JSON.stringify(context.resumeData)}`
+        user: `JD: ${context.jobDescription || "No job description provided"}\nRESUME: ${JSON.stringify(context.resumeData || {})}`
       },
       review: {
         system: `You are an experienced recruiter and hiring manager. Review the resume for a real role.
@@ -137,7 +137,7 @@ serve(async (req) => {
         "score": number,
         "scoreReason": "string"
       }`,
-        user: `RESUME: ${JSON.stringify(context.resumeData)}\nJOB DESCRIPTION: ${context.jobDescription || 'General Professional Role'}`
+        user: `RESUME: ${JSON.stringify(context.resumeData || {})}\nJOB DESCRIPTION: ${context.jobDescription || 'General Professional Role'}`
       },
       strategy: {
         system: `You are an experienced recruiter and resume strategist who has reviewed thousands of resumes.
@@ -172,13 +172,13 @@ serve(async (req) => {
           "score": number,
           "scoreReason": "Confidence score reason"
         }`,
-        user: `RESUME: ${JSON.stringify(context.resumeData)}\nJOB DESCRIPTION: ${context.jobDescription || 'General Professional Role'}`
+        user: `RESUME: ${JSON.stringify(context.resumeData || {})}\nJOB DESCRIPTION: ${context.jobDescription || 'General Professional Role'}`
       },
       improve_content: {
         system: `You are a professional resume writer. Rewrite the provided text to be more professional, action-oriented, and impactful. 
         Use strong action verbs. Quantify achievements where possible (add placeholders like [X] if needed but prefer polishing existing numbers).
         Keep it concise and suited for a resume. Return ONLY the rewritten text, no other commentary.`,
-        user: `Original Text: "${context.currentText}"\nSection Type: ${context.sectionType || "General"}`
+        user: `Original Text: "${context.currentText || "No text provided"}"\nSection Type: ${context.sectionType || "General"}`
       }
     };
 
