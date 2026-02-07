@@ -4,18 +4,17 @@ import {
     Packer,
     Paragraph,
     TextRun,
-    HeadingLevel,
     AlignmentType,
     BorderStyle,
     Table,
     TableRow,
     TableCell,
     WidthType,
-    VerticalAlign,
     convertInchesToTwip
 } from "docx";
 import { saveAs } from "file-saver";
 import { ResumeData } from "@/types/resume";
+import { TemplateId } from "../components/features/resume/templates";
 
 interface UseDocxExportOptions {
     filename?: string;
@@ -25,36 +24,78 @@ export const useDocxExport = (options: UseDocxExportOptions = {}) => {
     const [isExportingDocx, setIsExportingDocx] = useState(false);
     const { filename = "resume" } = options;
 
-    const exportToDocx = useCallback(async (data: ResumeData) => {
+    const exportToDocx = useCallback(async (data: ResumeData, templateId: TemplateId = "modern") => {
         setIsExportingDocx(true);
 
         try {
             const { personalInfo, summary, experience, education, skills } = data;
 
-            // Helper to parse markdown-like bold/italic in text
-            const parseFormatting = (text: string) => {
-                if (!text) return [new TextRun("")];
+            // Define template-aware styles and labels
+            const isClassic = templateId === "classic";
+            const isCreative = templateId === "creative";
 
+            const labels = {
+                summary: isCreative ? "About Me" : "Professional Summary",
+                experience: isClassic ? "Professional Experience" : (isCreative ? "Experience" : "Work Experience"),
+                education: "Education",
+                skills: "Skills"
+            };
+
+            const theme = {
+                font: isClassic ? "Times New Roman" : "Arial",
+                headingFont: isClassic ? "Times New Roman" : "Arial",
+                headerAlignment: isClassic ? AlignmentType.CENTER : AlignmentType.LEFT,
+                sectionAlignment: AlignmentType.LEFT,
+                sectionHeaderColor: isCreative ? "2563EB" : "000000",
+                headingSize: 26, // 13pt
+                bodySize: 20, // 10pt
+                nameSize: 56, // 28pt
+                subheadingSize: 22, // 11pt
+                headerUppercase: isClassic || templateId === "modern",
+                lineSpacing: 420, // 1.75 line spacing (extremely airy and premium)
+                paragraphSpacing: 300, // 15pt gap between paragraphs
+            };
+
+            // Formatting helper
+            const parseFormatting = (text: string, options: { bold?: boolean, italics?: boolean, size?: number, color?: string } = {}) => {
+                if (!text) return [new TextRun("")];
                 const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
                 return parts.map(part => {
                     if (part.startsWith('**') && part.endsWith('**')) {
-                        return new TextRun({ text: part.slice(2, -2), bold: true });
+                        return new TextRun({
+                            text: part.slice(2, -2),
+                            bold: true,
+                            font: theme.font,
+                            size: options.size || theme.bodySize,
+                            color: options.color
+                        });
                     }
                     if (part.startsWith('*') && part.endsWith('*')) {
-                        return new TextRun({ text: part.slice(1, -1), italics: true });
+                        return new TextRun({
+                            text: part.slice(1, -1),
+                            italics: true,
+                            font: theme.font,
+                            size: options.size || theme.bodySize,
+                            color: options.color
+                        });
                     }
-                    return new TextRun(part);
+                    return new TextRun({
+                        text: part,
+                        bold: options.bold,
+                        italics: options.italics,
+                        font: theme.font,
+                        size: options.size || theme.bodySize,
+                        color: options.color
+                    });
                 });
             };
 
-            // Helper to check if a line is a horizontal rule
             const isHorizontalRule = (line: string) => {
                 const trimmed = line.trim();
-                return /^[-*_]{3,}$/.test(trimmed) || /^(- ){3,}-?$/.test(trimmed);
+                return /^[ \t]*[-*_]{3,}[ \t]*$/.test(trimmed);
             };
 
-            // Helper to handle multiline text and lists
-            const createContentParagraphs = (text: string) => {
+            const createContentParagraphs = (text: string, size?: number) => {
                 if (!text) return [];
                 return text.split('\n')
                     .filter(line => line.trim() && !isHorizontalRule(line))
@@ -62,130 +103,211 @@ export const useDocxExport = (options: UseDocxExportOptions = {}) => {
                         const trimmed = line.trim();
                         const isBullet = /^[*•-]\s/.test(trimmed);
                         const content = isBullet ? trimmed.replace(/^[*•-]\s/, '') : trimmed;
-
                         return new Paragraph({
-                            children: parseFormatting(content),
+                            children: parseFormatting(content, { size }),
                             bullet: isBullet ? { level: 0 } : undefined,
-                            spacing: { after: 120 },
+                            spacing: { after: theme.paragraphSpacing, line: theme.lineSpacing },
+                            alignment: AlignmentType.LEFT,
+                            indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined, // Slight indent for creative to match preview " About Me"
                         });
                     });
             };
+
+            const createSectionHeader = (title: string) => {
+                const creativeAccent = isCreative ? [
+                    new TextRun({
+                        text: " ",
+                        size: theme.headingSize,
+                        font: theme.headingFont,
+                    })
+                ] : [];
+
+                return new Paragraph({
+                    children: [
+                        ...creativeAccent,
+                        new TextRun({
+                            text: theme.headerUppercase ? title.toUpperCase() : title,
+                            bold: true,
+                            size: theme.headingSize,
+                            font: theme.headingFont,
+                            color: theme.sectionHeaderColor,
+                        }),
+                    ],
+                    border: isCreative ? { left: { color: "2563EB", space: 4, style: BorderStyle.SINGLE, size: 24 } } : { bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 } },
+                    spacing: { before: 500, after: 300 },
+                    alignment: theme.sectionAlignment,
+                });
+            };
+
+            // Creative Header (Table with Background)
+            // Using explicit twip widths to prevent vertical collapse (8.5" - 1.2" margin = 7.3" = ~10500 twips)
+            const creativeHeader = isCreative ? new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                columnWidths: [10000],
+                borders: {
+                    top: { style: BorderStyle.NIL },
+                    bottom: { style: BorderStyle.NIL },
+                    left: { style: BorderStyle.NIL },
+                    right: { style: BorderStyle.NIL },
+                    insideHorizontal: { style: BorderStyle.NIL },
+                    insideVertical: { style: BorderStyle.NIL }
+                },
+                rows: [
+                    new TableRow({
+                        children: [
+                            new TableCell({
+                                shading: { fill: "2563EB" },
+                                width: { size: 100, type: WidthType.PERCENTAGE },
+                                margins: { top: 800, bottom: 800, left: 600, right: 400 },
+                                children: [
+                                    new Paragraph({
+                                        children: [
+                                            new TextRun({
+                                                text: personalInfo.fullName,
+                                                bold: true,
+                                                size: theme.nameSize,
+                                                font: theme.headingFont,
+                                                color: "FFFFFF",
+                                            }),
+                                        ],
+                                        spacing: { after: 200 },
+                                    }),
+                                    new Paragraph({
+                                        children: [
+                                            new TextRun({
+                                                text: [
+                                                    personalInfo.email,
+                                                    personalInfo.phone,
+                                                    personalInfo.location,
+                                                    personalInfo.linkedin,
+                                                    personalInfo.website
+                                                ].filter(Boolean).join(" • "),
+                                                size: 18,
+                                                font: theme.font,
+                                                color: "FFFFFF",
+                                            }),
+                                        ],
+                                        spacing: { after: 0 },
+                                    }),
+                                ],
+                            }),
+                        ],
+                    }),
+                ],
+            }) : null;
 
             const doc = new Document({
                 sections: [{
                     properties: {
                         page: {
                             margin: {
-                                top: convertInchesToTwip(0.75),
-                                bottom: convertInchesToTwip(0.75),
-                                left: convertInchesToTwip(0.75),
-                                right: convertInchesToTwip(0.75),
+                                top: convertInchesToTwip(0.6),
+                                bottom: convertInchesToTwip(0.6),
+                                left: convertInchesToTwip(0.6),
+                                right: convertInchesToTwip(0.6),
                             },
                         },
                     },
                     children: [
-                        // Header: Name
-                        new Paragraph({
-                            children: [
-                                new TextRun({
-                                    text: personalInfo.fullName.toUpperCase(),
-                                    bold: true,
-                                    size: 32, // 16pt
-                                }),
-                            ],
-                            alignment: AlignmentType.CENTER,
-                            spacing: { after: 120 },
-                        }),
-
-                        // Contact Info
-                        new Paragraph({
-                            children: [
-                                new TextRun({
-                                    text: [
-                                        personalInfo.email,
-                                        personalInfo.phone,
-                                        personalInfo.location,
-                                        personalInfo.linkedin,
-                                        personalInfo.website
-                                    ].filter(Boolean).join(" | "),
-                                    size: 18, // 9pt
-                                }),
-                            ],
-                            alignment: AlignmentType.CENTER,
-                            spacing: { after: 400 },
-                        }),
-
-                        // Summary Section
-                        ...(summary ? [
+                        // Header Logic
+                        ...(isCreative ? [creativeHeader!, new Paragraph({ spacing: { after: 600 } })] : [
+                            // Name (Standard)
                             new Paragraph({
-                                text: "PROFESSIONAL SUMMARY",
-                                heading: HeadingLevel.HEADING_1,
-                                border: { bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 } },
-                                spacing: { before: 200, after: 120 },
+                                children: [
+                                    new TextRun({
+                                        text: isClassic ? personalInfo.fullName.toUpperCase() : personalInfo.fullName,
+                                        bold: true,
+                                        size: theme.nameSize,
+                                        font: theme.headingFont,
+                                    }),
+                                ],
+                                alignment: theme.headerAlignment,
+                                spacing: { after: 200 },
                             }),
+
+                            // Contact Info (Standard)
+                            new Paragraph({
+                                children: [
+                                    new TextRun({
+                                        text: [
+                                            personalInfo.email,
+                                            personalInfo.phone,
+                                            personalInfo.location,
+                                            personalInfo.linkedin,
+                                            personalInfo.website
+                                        ].filter(Boolean).join(isClassic ? " | " : " • "),
+                                        size: 18,
+                                        font: theme.font,
+                                    }),
+                                ],
+                                alignment: theme.headerAlignment,
+                                spacing: { after: 600 },
+                            }),
+                        ]),
+
+                        // Summary
+                        ...(summary ? [
+                            createSectionHeader(labels.summary),
                             ...createContentParagraphs(summary),
                         ] : []),
 
-                        // Experience Section
+                        // Experience
                         ...(experience.length > 0 ? [
-                            new Paragraph({
-                                text: "PROFESSIONAL EXPERIENCE",
-                                heading: HeadingLevel.HEADING_1,
-                                border: { bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 } },
-                                spacing: { before: 200, after: 120 },
-                            }),
+                            createSectionHeader(labels.experience),
                             ...experience.flatMap(exp => [
-                                ...(exp.position || exp.company ? [
-                                    new Table({
-                                        width: { size: 100, type: WidthType.PERCENTAGE },
-                                        borders: {
-                                            top: { style: BorderStyle.NIL },
-                                            bottom: { style: BorderStyle.NIL },
-                                            left: { style: BorderStyle.NIL },
-                                            right: { style: BorderStyle.NIL },
-                                            insideHorizontal: { style: BorderStyle.NIL },
-                                            insideVertical: { style: BorderStyle.NIL }
-                                        },
-                                        rows: [
-                                            new TableRow({
-                                                children: [
-                                                    new TableCell({
-                                                        children: [new Paragraph({ children: [new TextRun({ text: exp.position, bold: true })] })],
-                                                        width: { size: 70, type: WidthType.PERCENTAGE },
-                                                    }),
-                                                    new TableCell({
-                                                        children: [new Paragraph({
-                                                            children: [new TextRun({ text: `${exp.startDate} - ${exp.current ? "Present" : exp.endDate}` })],
-                                                            alignment: AlignmentType.RIGHT
-                                                        })],
-                                                        width: { size: 30, type: WidthType.PERCENTAGE },
-                                                    }),
-                                                ],
-                                            }),
-                                            new TableRow({
-                                                children: [
-                                                    new TableCell({
-                                                        children: [new Paragraph({ children: [new TextRun({ text: `${exp.company}${exp.location ? `, ${exp.location}` : ""}`, italics: true })] })],
-                                                        width: { size: 100, type: WidthType.PERCENTAGE },
-                                                        columnSpan: 2,
-                                                    }),
-                                                ],
-                                            }),
-                                        ],
-                                    })
-                                ] : []),
+                                new Table({
+                                    width: { size: 100, type: WidthType.PERCENTAGE },
+                                    borders: {
+                                        top: { style: BorderStyle.NIL },
+                                        bottom: { style: BorderStyle.NIL },
+                                        left: { style: BorderStyle.NIL },
+                                        right: { style: BorderStyle.NIL },
+                                        insideHorizontal: { style: BorderStyle.NIL },
+                                        insideVertical: { style: BorderStyle.NIL }
+                                    },
+                                    rows: [
+                                        new TableRow({
+                                            children: [
+                                                new TableCell({
+                                                    children: [new Paragraph({
+                                                        children: [new TextRun({ text: exp.position, bold: true, font: theme.font, size: theme.subheadingSize })],
+                                                        spacing: { after: 60 },
+                                                        indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
+                                                    })],
+                                                    width: { size: 70, type: WidthType.PERCENTAGE },
+                                                }),
+                                                new TableCell({
+                                                    children: [new Paragraph({
+                                                        children: [new TextRun({ text: `${exp.startDate} - ${exp.current ? "Present" : exp.endDate}`, font: theme.font, size: 18 })],
+                                                        alignment: AlignmentType.RIGHT,
+                                                        spacing: { after: 60 }
+                                                    })],
+                                                    width: { size: 30, type: WidthType.PERCENTAGE },
+                                                }),
+                                            ],
+                                        }),
+                                        new TableRow({
+                                            children: [
+                                                new TableCell({
+                                                    children: [new Paragraph({
+                                                        children: [new TextRun({ text: `${exp.company}${exp.location ? `, ${exp.location}` : ""}`, italics: true, font: theme.font, size: 18 })],
+                                                        spacing: { after: 100 },
+                                                        indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
+                                                    })],
+                                                    width: { size: 100, type: WidthType.PERCENTAGE },
+                                                    columnSpan: 2,
+                                                }),
+                                            ],
+                                        }),
+                                    ],
+                                }),
                                 ...createContentParagraphs(exp.description),
                             ])
                         ] : []),
 
-                        // Education Section
+                        // Education
                         ...(education.length > 0 ? [
-                            new Paragraph({
-                                text: "EDUCATION",
-                                heading: HeadingLevel.HEADING_1,
-                                border: { bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 } },
-                                spacing: { before: 200, after: 120 },
-                            }),
+                            createSectionHeader(labels.education),
                             ...education.flatMap(edu => [
                                 new Table({
                                     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -201,13 +323,18 @@ export const useDocxExport = (options: UseDocxExportOptions = {}) => {
                                         new TableRow({
                                             children: [
                                                 new TableCell({
-                                                    children: [new Paragraph({ children: [new TextRun({ text: edu.institution, bold: true })] })],
+                                                    children: [new Paragraph({
+                                                        children: [new TextRun({ text: edu.institution, bold: true, font: theme.font, size: theme.subheadingSize })],
+                                                        spacing: { after: 60 },
+                                                        indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
+                                                    })],
                                                     width: { size: 70, type: WidthType.PERCENTAGE },
                                                 }),
                                                 new TableCell({
                                                     children: [new Paragraph({
-                                                        children: [new TextRun({ text: `${edu.startDate} - ${edu.endDate}` })],
-                                                        alignment: AlignmentType.RIGHT
+                                                        children: [new TextRun({ text: `${edu.startDate} - ${edu.endDate}`, font: theme.font, size: 18 })],
+                                                        alignment: AlignmentType.RIGHT,
+                                                        spacing: { after: 60 }
                                                     })],
                                                     width: { size: 30, type: WidthType.PERCENTAGE },
                                                 }),
@@ -216,7 +343,11 @@ export const useDocxExport = (options: UseDocxExportOptions = {}) => {
                                         new TableRow({
                                             children: [
                                                 new TableCell({
-                                                    children: [new Paragraph({ text: `${edu.degree}${edu.field ? ` in ${edu.field}` : ""}` })],
+                                                    children: [new Paragraph({
+                                                        children: [new TextRun({ text: `${edu.degree}${edu.field ? ` in ${edu.field}` : ""}`, font: theme.font, size: 18 })],
+                                                        spacing: { after: 60 },
+                                                        indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
+                                                    })],
                                                     width: { size: 100, type: WidthType.PERCENTAGE },
                                                     columnSpan: 2,
                                                 }),
@@ -224,23 +355,23 @@ export const useDocxExport = (options: UseDocxExportOptions = {}) => {
                                         }),
                                     ],
                                 }),
-                                ...(edu.gpa ? [new Paragraph({ text: `GPA: ${edu.gpa}`, spacing: { after: 100 } })] : []),
+                                ...(edu.gpa ? [new Paragraph({
+                                    children: [new TextRun({ text: `GPA: ${edu.gpa}`, font: theme.font, size: 18 })],
+                                    spacing: { after: 150 },
+                                    indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
+                                })] : []),
                             ])
                         ] : []),
 
-                        // Skills Section
+                        // Skills
                         ...(skills.length > 0 ? [
-                            new Paragraph({
-                                text: "SKILLS",
-                                heading: HeadingLevel.HEADING_1,
-                                border: { bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 } },
-                                spacing: { before: 200, after: 120 },
-                            }),
+                            createSectionHeader(labels.skills),
                             new Paragraph({
                                 children: [
-                                    new TextRun({ text: skills.map(s => s.name).join(" • ") })
+                                    new TextRun({ text: skills.map(s => s.name).join(" • "), font: theme.font, size: theme.bodySize })
                                 ],
-                                spacing: { after: 200 },
+                                spacing: { after: 300, line: theme.lineSpacing },
+                                indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
                             }),
                         ] : []),
                     ],

@@ -59,6 +59,7 @@ import {
 } from "lucide-react";
 import { JobTargeting } from "./JobTargeting";
 import { AtsHealthCheck } from "./AtsHealthCheck";
+import { atsScanner } from "@/lib/atsScanner";
 import { ImportResume } from "./ImportResume";
 import { TemplateStrategy } from "./TemplateStrategy";
 import { RecruiterReview } from "./RecruiterReview";
@@ -446,7 +447,7 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
                       <FileIcon className="w-4 h-4" />
                       <span>Export as PDF</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => exportToDocx(resumeData)} className="flex items-center gap-2 cursor-pointer">
+                    <DropdownMenuItem onClick={() => exportToDocx(resumeData, selectedTemplate)} className="flex items-center gap-2 cursor-pointer">
                       <FileDown className="w-4 h-4" />
                       <span>Export as DOCX (Word)</span>
                     </DropdownMenuItem>
@@ -517,9 +518,21 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
                       />
                       <AtsHealthCheck />
                     </div>
-                    <span className="text-xs px-2 py-1 rounded-full bg-accent/20 text-accent-foreground">
-                      ATS-Friendly
-                    </span>
+                    {(() => {
+                      const score = atsScanner.scan(resumeData).score;
+                      let status = { label: "ATS-Friendly", color: "bg-accent/20 text-accent-foreground border-accent/20" };
+
+                      if (score >= 90) status = { label: "Expert Optimized", color: "bg-emerald-500/10 text-emerald-600 border-emerald-200/50" };
+                      else if (score >= 75) status = { label: "Highly Compatible", color: "bg-blue-500/10 text-blue-600 border-blue-200/50" };
+                      else if (score >= 50) status = { label: "ATS Ready", color: "bg-sky-500/10 text-sky-600 border-sky-200/50" };
+                      else status = { label: "Needs Optimization", color: "bg-amber-500/10 text-amber-600 border-amber-200/50" };
+
+                      return (
+                        <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md border shadow-sm transition-all duration-300", status.color)}>
+                          {status.label}
+                        </span>
+                      );
+                    })()}
                   </div>
                   <ScrollArea className="h-[calc(100vh-220px)]">
                     <div ref={previewRef} className="animate-fade-in">
@@ -541,7 +554,7 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
             </div>
           </div>
         </div>
-      </TooltipProvider>
-    </FormProvider>
+      </TooltipProvider >
+    </FormProvider >
   );
 };
