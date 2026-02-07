@@ -47,20 +47,28 @@ export const useDocxExport = (options: UseDocxExportOptions = {}) => {
                 });
             };
 
+            // Helper to check if a line is a horizontal rule
+            const isHorizontalRule = (line: string) => {
+                const trimmed = line.trim();
+                return /^[-*_]{3,}$/.test(trimmed) || /^(- ){3,}-?$/.test(trimmed);
+            };
+
             // Helper to handle multiline text and lists
             const createContentParagraphs = (text: string) => {
                 if (!text) return [];
-                return text.split('\n').filter(line => line.trim()).map(line => {
-                    const trimmed = line.trim();
-                    const isBullet = /^[*•-]\s/.test(trimmed);
-                    const content = isBullet ? trimmed.replace(/^[*•-]\s/, '') : trimmed;
+                return text.split('\n')
+                    .filter(line => line.trim() && !isHorizontalRule(line))
+                    .map(line => {
+                        const trimmed = line.trim();
+                        const isBullet = /^[*•-]\s/.test(trimmed);
+                        const content = isBullet ? trimmed.replace(/^[*•-]\s/, '') : trimmed;
 
-                    return new Paragraph({
-                        children: parseFormatting(content),
-                        bullet: isBullet ? { level: 0 } : undefined,
-                        spacing: { after: 120 },
+                        return new Paragraph({
+                            children: parseFormatting(content),
+                            bullet: isBullet ? { level: 0 } : undefined,
+                            spacing: { after: 120 },
+                        });
                     });
-                });
             };
 
             const doc = new Document({
