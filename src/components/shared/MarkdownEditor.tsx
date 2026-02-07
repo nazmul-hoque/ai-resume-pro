@@ -35,27 +35,35 @@ export const MarkdownEditor = ({
                 bulletListMarker: "•",
             }),
         ],
-        content: value,
-        onUpdate: ({ editor }) => {
-            const markdown = editor.storage.markdown.getMarkdown();
-            onChange?.({ target: { value: markdown } });
+    content: value,
+    onUpdate: ({ editor }) => {
+        // Access markdown storage through any to avoid TypeScript issues with extension storage
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const editorAny = editor as any;
+        const markdown = editorAny.storage?.markdown?.getMarkdown?.() ?? editor.getText();
+        onChange?.({ target: { value: markdown } });
+    },
+    editorProps: {
+        attributes: {
+            class: cn(
+                "prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[120px] p-3 text-sm",
+                className
+            ),
         },
-        editorProps: {
-            attributes: {
-                class: cn(
-                    "prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[120px] p-3 text-sm",
-                    className
-                ),
-            },
-        },
-    });
+    },
+});
 
-    // Update editor content when value prop changes externally
-    useEffect(() => {
-        if (editor && value !== editor.storage.markdown.getMarkdown()) {
+// Update editor content when value prop changes externally
+useEffect(() => {
+    if (editor) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const editorAny = editor as any;
+        const currentMarkdown = editorAny.storage?.markdown?.getMarkdown?.() ?? editor.getText();
+        if (value !== currentMarkdown) {
             editor.commands.setContent(value);
         }
-    }, [value, editor]);
+    }
+}, [value, editor]);
 
     if (!editor) {
         return null;
