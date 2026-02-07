@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
         backgroundColor: PRIMARY_COLOR,
         padding: PDF_THEME.page.padding, // Inner padding
         color: TEXT_LIGHT,
-        marginBottom: PDF_THEME.spacing.xl,
+        marginBottom: PDF_THEME.spacing.xxl,
     },
     contentContainer: {
         paddingHorizontal: PDF_THEME.page.padding,
@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
     name: {
         fontSize: 28,
         fontWeight: 'bold',
-        marginBottom: 8,
+        marginBottom: 12,
         color: TEXT_LIGHT,
     },
     contactInfo: {

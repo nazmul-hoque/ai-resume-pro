@@ -32,7 +32,7 @@ export const MarkdownEditor = React.forwardRef<HTMLDivElement, MarkdownEditorPro
             Markdown.configure({
                 html: false,
                 tightLists: true,
-                bulletListMarker: "•",
+                bulletListMarker: "-",
             }),
         ],
         content: value,
@@ -71,6 +71,24 @@ export const MarkdownEditor = React.forwardRef<HTMLDivElement, MarkdownEditorPro
 
     return (
         <div ref={ref} className="border rounded-md overflow-hidden bg-background">
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                .tiptap-editor .ProseMirror ul {
+                    list-style-type: disc !important;
+                    padding-left: 1.5rem !important;
+                    margin-top: 0.5rem !important;
+                    margin-bottom: 0.5rem !important;
+                }
+                .tiptap-editor .ProseMirror ol {
+                    list-style-type: decimal !important;
+                    padding-left: 1.5rem !important;
+                    margin-top: 0.5rem !important;
+                    margin-bottom: 0.5rem !important;
+                }
+                .tiptap-editor .ProseMirror li {
+                    display: list-item !important;
+                }
+            `}} />
             <div className="flex items-center gap-1 p-1 border-b bg-muted/20">
                 <Button
                     type="button"
@@ -103,8 +121,20 @@ export const MarkdownEditor = React.forwardRef<HTMLDivElement, MarkdownEditorPro
                 >
                     <List className="h-4 w-4" />
                 </Button>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className={cn("h-8 w-8 p-0", editor.isActive("orderedList") && "bg-muted")}
+                    onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                    title="Numbered List"
+                >
+                    <ListOrdered className="h-4 w-4" />
+                </Button>
             </div>
-            <EditorContent editor={editor} />
+            <div className="tiptap-editor">
+                <EditorContent editor={editor} />
+            </div>
         </div>
     );
 });

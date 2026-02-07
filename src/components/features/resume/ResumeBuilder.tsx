@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePdfExport } from "@/hooks/usePdfExport";
+import { useDocxExport } from "@/hooks/useDocxExport";
 import { useCreateResume, useUpdateResume, Resume } from "@/hooks/useResumes";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAutoSave } from "@/hooks/useAutoSave";
@@ -33,6 +34,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   User,
   FileText,
   Briefcase,
@@ -47,6 +54,8 @@ import {
   Check,
   Cloud,
   CloudOff,
+  FileText as FileIcon,
+  FileDown,
 } from "lucide-react";
 import { JobTargeting } from "./JobTargeting";
 import { AtsHealthCheck } from "./AtsHealthCheck";
@@ -276,7 +285,13 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
   const isSaving = createResume.isPending || updateResume.isPending;
   const previewRef = useRef<HTMLDivElement>(null);
 
-  const { exportToPdf, isExporting } = usePdfExport({
+  const { exportToPdf, previewPdf, isExporting } = usePdfExport({
+    filename: resumeData.personalInfo.fullName
+      ? `${resumeData.personalInfo.fullName.replace(/\s+/g, "_")}_Resume`
+      : "Resume"
+  });
+
+  const { exportToDocx, isExportingDocx } = useDocxExport({
     filename: resumeData.personalInfo.fullName
       ? `${resumeData.personalInfo.fullName.replace(/\s+/g, "_")}_Resume`
       : "Resume"
@@ -284,6 +299,10 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
 
   const handleDownloadPdf = () => {
     exportToPdf(resumeData, selectedTemplate);
+  };
+
+  const handlePreviewPdf = () => {
+    previewPdf(resumeData, selectedTemplate);
   };
 
   const sectionConfig = {
@@ -402,20 +421,37 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
                   {showPreview ? <Edit3 className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </Button>
 
-                <Button
-                  variant="hero"
-                  size="sm"
-                  className="h-9 px-4 lg:px-6 gap-2 rounded-full shadow-lg shadow-primary/20 ring-1 ring-white/20"
-                  onClick={handleDownloadPdf}
-                  disabled={isExporting}
-                >
-                  {isExporting ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Download className="w-3.5 h-3.5" />
-                  )}
-                  <span className="text-xs font-bold tracking-tight uppercase">Download</span>
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="hero"
+                      size="sm"
+                      className="h-9 px-4 lg:px-6 gap-2 rounded-full shadow-lg shadow-primary/20 ring-1 ring-white/20"
+                      disabled={isExporting || isExportingDocx}
+                    >
+                      {isExporting || isExportingDocx ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Download className="w-3.5 h-3.5" />
+                      )}
+                      <span className="text-xs font-bold tracking-tight uppercase">Download</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={handlePreviewPdf} className="flex items-center gap-2 cursor-pointer">
+                      <Eye className="w-4 h-4" />
+                      <span>Print Preview</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleDownloadPdf} className="flex items-center gap-2 cursor-pointer">
+                      <FileIcon className="w-4 h-4" />
+                      <span>Export as PDF</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => exportToDocx(resumeData)} className="flex items-center gap-2 cursor-pointer">
+                      <FileDown className="w-4 h-4" />
+                      <span>Export as DOCX (Word)</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </header>

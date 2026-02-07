@@ -70,6 +70,7 @@ const Index = () => {
       }
     } else {
       setShowSavedResumes(false);
+      setShowApplications(false);
     }
     setSelectedResume(null);
     setSelectedTemplate(undefined);

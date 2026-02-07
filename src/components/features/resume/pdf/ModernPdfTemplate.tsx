@@ -24,15 +24,15 @@ const styles = StyleSheet.create({
         color: PDF_THEME.colors.text.secondary,
     },
     header: {
-        marginBottom: PDF_THEME.spacing.xl,
+        marginBottom: PDF_THEME.spacing.xxl,
         borderBottom: `1px solid ${PDF_THEME.colors.border}`,
-        paddingBottom: PDF_THEME.spacing.xl,
+        paddingBottom: PDF_THEME.spacing.xxl,
     },
     name: {
         fontSize: 24,
         fontWeight: 'bold',
         color: PDF_THEME.colors.text.primary,
-        marginBottom: 5,
+        marginBottom: 10,
         textTransform: 'uppercase',
     },
     contactInfo: {

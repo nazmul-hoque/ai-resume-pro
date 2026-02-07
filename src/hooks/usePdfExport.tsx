@@ -18,7 +18,6 @@ export const usePdfExport = (options: UsePdfExportOptions = {}) => {
     setIsExporting(true);
 
     try {
-      // Select the correct PDF template based on the ID
       let DocumentComponent;
       switch (template) {
         case 'classic':
@@ -52,5 +51,29 @@ export const usePdfExport = (options: UsePdfExportOptions = {}) => {
     }
   }, [filename]);
 
-  return { exportToPdf, isExporting };
+  const previewPdf = useCallback(async (data: ResumeData, template: TemplateId) => {
+    try {
+      let DocumentComponent;
+      switch (template) {
+        case 'classic':
+          DocumentComponent = <ClassicPdfTemplate data={data} />;
+          break;
+        case 'creative':
+          DocumentComponent = <CreativePdfTemplate data={data} />;
+          break;
+        case 'modern':
+        default:
+          DocumentComponent = <ModernPdfTemplate data={data} />;
+          break;
+      }
+
+      const blob = await pdf(DocumentComponent).toBlob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error("Failed to preview PDF:", error);
+    }
+  }, []);
+
+  return { exportToPdf, previewPdf, isExporting };
 };
