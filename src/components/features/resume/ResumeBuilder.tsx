@@ -64,6 +64,8 @@ import { ImportResume } from "./ImportResume";
 import { TemplateStrategy } from "./TemplateStrategy";
 import { RecruiterReview } from "./RecruiterReview";
 import { CoverLetterGenerator } from "./CoverLetterGenerator";
+import { ShareDialog } from "./ShareDialog";
+import { activityService } from "@/services/activity.service";
 import {
   DndContext,
   closestCenter,
@@ -168,6 +170,7 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [openSections, setOpenSections] = useState<string[]>(["personal"]);
+  const [isPublic, setIsPublic] = useState(initialResume?.is_public || false);
 
   const methods = useForm<ResumeData>({
     resolver: zodResolver(ResumeDataSchema),
@@ -250,6 +253,7 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
           onSuccess: () => {
             setHasUnsavedChanges(false);
             setLastSaved(new Date());
+            activityService.logActivity('resume_updated', `Updated resume: ${resumeTitle}`);
           },
         }
       );
@@ -261,6 +265,7 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
             setResumeId(newResume.id);
             setHasUnsavedChanges(false);
             setLastSaved(new Date());
+            activityService.logActivity('resume_created', `Created new resume: ${resumeTitle}`);
           },
         }
       );
@@ -298,12 +303,14 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
       : "Resume"
   });
 
-  const handleDownloadPdf = () => {
-    exportToPdf(resumeData, selectedTemplate);
+  const handleDownloadPdf = async () => {
+    await exportToPdf(resumeData, selectedTemplate);
+    activityService.logActivity('pdf_exported', `Exported PDF: ${resumeTitle}`);
   };
 
-  const handlePreviewPdf = () => {
-    previewPdf(resumeData, selectedTemplate);
+  const handlePreviewPdf = async () => {
+    await previewPdf(resumeData, selectedTemplate);
+    activityService.logActivity('pdf_exported', `Generated Print Preview: ${resumeTitle}`);
   };
 
   const sectionConfig = {
@@ -322,7 +329,7 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
         <div className="min-h-screen bg-background">
           {/* Header */}
           <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-card/60 backdrop-blur-xl supports-[backdrop-filter]:bg-card/60">
-            <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
+            <div className="max-w-full px-4 lg:px-8 py-4 flex items-center justify-between gap-4">
               {/* Left: Navigation & Title */}
               <div className="flex items-center gap-3 lg:gap-6 min-w-0">
                 <Button
@@ -453,15 +460,23 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+
+                {resumeId && (
+                  <ShareDialog
+                    resumeId={resumeId}
+                    isPublic={isPublic}
+                    onUpdate={setIsPublic}
+                  />
+                )}
               </div>
             </div>
           </header>
 
           {/* Main Content */}
-          <div className="container mx-auto px-4 py-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="max-w-full px-4 lg:px-8 py-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Editor Panel */}
-              <div className={`${showPreview ? "hidden md:block" : ""}`}>
+              <div className={cn("lg:col-span-5", showPreview ? "hidden md:block" : "")}>
                 <Card className="card-shadow">
                   {/* Progress indicator */}
                   <div className="p-4 border-b">
@@ -508,7 +523,7 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
               </div>
 
               {/* Preview Panel */}
-              <div className={`${!showPreview ? "hidden md:block" : ""}`}>
+              <div className={cn("lg:col-span-7", !showPreview ? "hidden md:block" : "")}>
                 <Card className="card-shadow sticky top-24 overflow-hidden">
                   <div className="bg-muted/50 px-4 py-3 border-b flex items-center justify-between">
                     <div className="flex items-center gap-4">

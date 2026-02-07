@@ -16,6 +16,7 @@ import {
 import { saveAs } from "file-saver";
 import { ResumeData } from "@/types/resume";
 import { TemplateId } from "../components/features/resume/templates";
+import { markdownToDocx } from "@/utils/markdownToDocx";
 
 interface UseDocxExportOptions {
     filename?: string;
@@ -59,65 +60,13 @@ export const useDocxExport = (options: UseDocxExportOptions = {}) => {
                 bulletSpacingPts: 4, // 4pt after bullets
             };
 
-            // Formatting helper
-            const parseFormatting = (text: string, options: { bold?: boolean, italics?: boolean, size?: number, color?: string } = {}) => {
-                if (!text) return [new TextRun("")];
-                const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
-                return parts.map(part => {
-                    if (part.startsWith('**') && part.endsWith('**')) {
-                        return new TextRun({
-                            text: part.slice(2, -2),
-                            bold: true,
-                            font: theme.font,
-                            size: options.size || theme.bodySize,
-                            color: options.color
-                        });
-                    }
-                    if (part.startsWith('*') && part.endsWith('*')) {
-                        return new TextRun({
-                            text: part.slice(1, -1),
-                            italics: true,
-                            font: theme.font,
-                            size: options.size || theme.bodySize,
-                            color: options.color
-                        });
-                    }
-                    return new TextRun({
-                        text: part,
-                        bold: options.bold,
-                        italics: options.italics,
-                        font: theme.font,
-                        size: options.size || theme.bodySize,
-                        color: options.color
-                    });
-                });
-            };
-
-            const isHorizontalRule = (line: string) => {
-                const trimmed = line.trim();
-                return /^[ \t]*[-*_]{3,}[ \t]*$/.test(trimmed);
-            };
-
-            const createContentParagraphs = (text: string, size?: number) => {
-                if (!text) return [];
-                return text.split('\n')
-                    .filter(line => line.trim() && !isHorizontalRule(line))
-                    .map(line => {
-                        const trimmed = line.trim();
-                        const isBullet = /^[*•-]\s/.test(trimmed);
-                        const content = isBullet ? trimmed.replace(/^[*•-]\s/, '') : trimmed;
-                        return new Paragraph({
-                            children: parseFormatting(content, { size }),
-                            bullet: isBullet ? { level: 0 } : undefined,
-                            spacing: { 
-                                after: (isBullet ? theme.bulletSpacingPts : theme.paragraphSpacingPts) * 20, // Convert pt to twips
-                                line: theme.lineSpacingPts * 20, // Convert pt to twips
-                                lineRule: LineRuleType.EXACT
-                            },
-                            alignment: AlignmentType.LEFT,
-                            indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
-                        });
-                    });
+            const transformerOptions = {
+                font: theme.font,
+                bodySize: theme.bodySize,
+                lineSpacingPts: theme.lineSpacingPts,
+                paragraphSpacingPts: theme.paragraphSpacingPts,
+                bulletSpacingPts: theme.bulletSpacingPts,
+                isCreative
             };
 
             const createSectionHeader = (title: string) => {
@@ -203,6 +152,117 @@ export const useDocxExport = (options: UseDocxExportOptions = {}) => {
                 ],
             }) : null;
 
+            // Generate content batches
+            const summaryParas = summary ? await markdownToDocx(summary, transformerOptions) : [];
+            const experienceParas = await Promise.all(experience.map(async exp => {
+                const header = new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    borders: {
+                        top: { style: BorderStyle.NIL },
+                        bottom: { style: BorderStyle.NIL },
+                        left: { style: BorderStyle.NIL },
+                        right: { style: BorderStyle.NIL },
+                        insideHorizontal: { style: BorderStyle.NIL },
+                        insideVertical: { style: BorderStyle.NIL }
+                    },
+                    rows: [
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [new Paragraph({
+                                        children: [new TextRun({ text: exp.position, bold: true, font: theme.font, size: theme.subheadingSize })],
+                                        spacing: { after: 60 },
+                                        indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
+                                    })],
+                                    width: { size: 70, type: WidthType.PERCENTAGE },
+                                }),
+                                new TableCell({
+                                    children: [new Paragraph({
+                                        children: [new TextRun({ text: `${exp.startDate} - ${exp.current ? "Present" : exp.endDate}`, font: theme.font, size: 18 })],
+                                        alignment: AlignmentType.RIGHT,
+                                        spacing: { after: 60 }
+                                    })],
+                                    width: { size: 30, type: WidthType.PERCENTAGE },
+                                }),
+                            ],
+                        }),
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [new Paragraph({
+                                        children: [new TextRun({ text: `${exp.company}${exp.location ? `, ${exp.location}` : ""}`, italics: true, font: theme.font, size: 18 })],
+                                        spacing: { after: 100 },
+                                        indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
+                                    })],
+                                    width: { size: 100, type: WidthType.PERCENTAGE },
+                                    columnSpan: 2,
+                                }),
+                            ],
+                        }),
+                    ],
+                });
+                const description = await markdownToDocx(exp.description, transformerOptions);
+                return [header, ...description];
+            }));
+
+            const educationParas = await Promise.all(education.map(async edu => {
+                const header = new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    borders: {
+                        top: { style: BorderStyle.NIL },
+                        bottom: { style: BorderStyle.NIL },
+                        left: { style: BorderStyle.NIL },
+                        right: { style: BorderStyle.NIL },
+                        insideHorizontal: { style: BorderStyle.NIL },
+                        insideVertical: { style: BorderStyle.NIL }
+                    },
+                    rows: [
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [new Paragraph({
+                                        children: [new TextRun({ text: edu.institution, bold: true, font: theme.font, size: theme.subheadingSize })],
+                                        spacing: { after: 60 },
+                                        indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
+                                    })],
+                                    width: { size: 70, type: WidthType.PERCENTAGE },
+                                }),
+                                new TableCell({
+                                    children: [new Paragraph({
+                                        children: [new TextRun({ text: `${edu.startDate} - ${edu.endDate}`, font: theme.font, size: 18 })],
+                                        alignment: AlignmentType.RIGHT,
+                                        spacing: { after: 60 }
+                                    })],
+                                    width: { size: 30, type: WidthType.PERCENTAGE },
+                                }),
+                            ],
+                        }),
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [new Paragraph({
+                                        children: [new TextRun({ text: `${edu.degree}${edu.field ? ` in ${edu.field}` : ""}`, font: theme.font, size: 18 })],
+                                        spacing: { after: 60 },
+                                        indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
+                                    })],
+                                    width: { size: 100, type: WidthType.PERCENTAGE },
+                                    columnSpan: 2,
+                                }),
+                            ],
+                        }),
+                    ],
+                });
+                const gpa = edu.gpa ? [new Paragraph({
+                    children: [new TextRun({ text: `GPA: ${edu.gpa}`, font: theme.font, size: 18 })],
+                    spacing: { after: 150 },
+                    indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
+                })] : [];
+                return [header, ...gpa];
+            }));
+
+            const skillsText = skills.map(s => s.name).join(" • ");
+            const skillsParas = skillsText ? await markdownToDocx(skillsText, transformerOptions) : [];
+
             const doc = new Document({
                 sections: [{
                     properties: {
@@ -253,133 +313,27 @@ export const useDocxExport = (options: UseDocxExportOptions = {}) => {
                         ]),
 
                         // Summary
-                        ...(summary ? [
+                        ...(summaryParas.length > 0 ? [
                             createSectionHeader(labels.summary),
-                            ...createContentParagraphs(summary),
+                            ...summaryParas,
                         ] : []),
 
                         // Experience
-                        ...(experience.length > 0 ? [
+                        ...(experienceParas.length > 0 ? [
                             createSectionHeader(labels.experience),
-                            ...experience.flatMap(exp => [
-                                new Table({
-                                    width: { size: 100, type: WidthType.PERCENTAGE },
-                                    borders: {
-                                        top: { style: BorderStyle.NIL },
-                                        bottom: { style: BorderStyle.NIL },
-                                        left: { style: BorderStyle.NIL },
-                                        right: { style: BorderStyle.NIL },
-                                        insideHorizontal: { style: BorderStyle.NIL },
-                                        insideVertical: { style: BorderStyle.NIL }
-                                    },
-                                    rows: [
-                                        new TableRow({
-                                            children: [
-                                                new TableCell({
-                                                    children: [new Paragraph({
-                                                        children: [new TextRun({ text: exp.position, bold: true, font: theme.font, size: theme.subheadingSize })],
-                                                        spacing: { after: 60 },
-                                                        indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
-                                                    })],
-                                                    width: { size: 70, type: WidthType.PERCENTAGE },
-                                                }),
-                                                new TableCell({
-                                                    children: [new Paragraph({
-                                                        children: [new TextRun({ text: `${exp.startDate} - ${exp.current ? "Present" : exp.endDate}`, font: theme.font, size: 18 })],
-                                                        alignment: AlignmentType.RIGHT,
-                                                        spacing: { after: 60 }
-                                                    })],
-                                                    width: { size: 30, type: WidthType.PERCENTAGE },
-                                                }),
-                                            ],
-                                        }),
-                                        new TableRow({
-                                            children: [
-                                                new TableCell({
-                                                    children: [new Paragraph({
-                                                        children: [new TextRun({ text: `${exp.company}${exp.location ? `, ${exp.location}` : ""}`, italics: true, font: theme.font, size: 18 })],
-                                                        spacing: { after: 100 },
-                                                        indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
-                                                    })],
-                                                    width: { size: 100, type: WidthType.PERCENTAGE },
-                                                    columnSpan: 2,
-                                                }),
-                                            ],
-                                        }),
-                                    ],
-                                }),
-                                ...createContentParagraphs(exp.description),
-                            ])
+                            ...experienceParas.flat(),
                         ] : []),
 
                         // Education
-                        ...(education.length > 0 ? [
+                        ...(educationParas.length > 0 ? [
                             createSectionHeader(labels.education),
-                            ...education.flatMap(edu => [
-                                new Table({
-                                    width: { size: 100, type: WidthType.PERCENTAGE },
-                                    borders: {
-                                        top: { style: BorderStyle.NIL },
-                                        bottom: { style: BorderStyle.NIL },
-                                        left: { style: BorderStyle.NIL },
-                                        right: { style: BorderStyle.NIL },
-                                        insideHorizontal: { style: BorderStyle.NIL },
-                                        insideVertical: { style: BorderStyle.NIL }
-                                    },
-                                    rows: [
-                                        new TableRow({
-                                            children: [
-                                                new TableCell({
-                                                    children: [new Paragraph({
-                                                        children: [new TextRun({ text: edu.institution, bold: true, font: theme.font, size: theme.subheadingSize })],
-                                                        spacing: { after: 60 },
-                                                        indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
-                                                    })],
-                                                    width: { size: 70, type: WidthType.PERCENTAGE },
-                                                }),
-                                                new TableCell({
-                                                    children: [new Paragraph({
-                                                        children: [new TextRun({ text: `${edu.startDate} - ${edu.endDate}`, font: theme.font, size: 18 })],
-                                                        alignment: AlignmentType.RIGHT,
-                                                        spacing: { after: 60 }
-                                                    })],
-                                                    width: { size: 30, type: WidthType.PERCENTAGE },
-                                                }),
-                                            ],
-                                        }),
-                                        new TableRow({
-                                            children: [
-                                                new TableCell({
-                                                    children: [new Paragraph({
-                                                        children: [new TextRun({ text: `${edu.degree}${edu.field ? ` in ${edu.field}` : ""}`, font: theme.font, size: 18 })],
-                                                        spacing: { after: 60 },
-                                                        indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
-                                                    })],
-                                                    width: { size: 100, type: WidthType.PERCENTAGE },
-                                                    columnSpan: 2,
-                                                }),
-                                            ],
-                                        }),
-                                    ],
-                                }),
-                                ...(edu.gpa ? [new Paragraph({
-                                    children: [new TextRun({ text: `GPA: ${edu.gpa}`, font: theme.font, size: 18 })],
-                                    spacing: { after: 150 },
-                                    indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
-                                })] : []),
-                            ])
+                            ...educationParas.flat(),
                         ] : []),
 
                         // Skills
-                        ...(skills.length > 0 ? [
+                        ...(skillsParas.length > 0 ? [
                             createSectionHeader(labels.skills),
-                            new Paragraph({
-                                children: [
-                                    new TextRun({ text: skills.map(s => s.name).join(" • "), font: theme.font, size: theme.bodySize })
-                                ],
-                                spacing: { after: 300, line: theme.lineSpacingPts * 20, lineRule: LineRuleType.EXACT },
-                                indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
-                            }),
+                            ...skillsParas,
                         ] : []),
                     ],
                 }],

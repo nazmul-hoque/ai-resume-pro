@@ -12,6 +12,7 @@ import { TemplatesGallery } from "@/components/features/landing/TemplatesGallery
 import { FeaturesSection } from "@/components/features/landing/FeaturesSection";
 import { ApplicationDashboard } from "@/components/features/applications/ApplicationDashboard";
 import { Footer } from "@/components/features/landing/Footer";
+import { RecentActivity } from "@/components/features/dashboard/RecentActivity";
 import { TemplateId } from "@/components/features/resume/templates";
 
 const Index = () => {
@@ -98,7 +99,7 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-background">
         <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-lg">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="max-w-full px-4 lg:px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="sm" onClick={handleBack} className="gap-2">
                 <ArrowLeft className="w-4 h-4" />
@@ -123,14 +124,21 @@ const Index = () => {
             )}
           </div>
         </header>
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="max-w-full px-4 lg:px-8 py-8">
           {showApplications ? (
             <ApplicationDashboard />
           ) : (
-            <div className="max-w-2xl mx-auto">
-              <Card className="p-6">
-                <SavedResumes onSelectResume={handleSelectResume} onCreateNew={handleCreateNew} />
-              </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-7xl mx-auto">
+              <div className="lg:col-span-8">
+                <Card className="p-6">
+                  <SavedResumes onSelectResume={handleSelectResume} onCreateNew={handleCreateNew} />
+                </Card>
+              </div>
+              <div className="lg:col-span-4">
+                <Card className="p-6 h-full bg-card/50 backdrop-blur-sm border-dashed">
+                  <RecentActivity />
+                </Card>
+              </div>
             </div>
           )}
         </div>

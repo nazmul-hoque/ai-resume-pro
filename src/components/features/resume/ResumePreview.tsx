@@ -41,11 +41,11 @@ export const ResumePreview = ({ data, template = "modern" }: ResumePreviewProps)
   };
 
   return (
-    <div className="h-full overflow-auto bg-muted/30 p-2 sm:p-4 custom-scrollbar">
-      <div className="bg-white shadow-xl rounded-sm border border-border/50">
-        <div className="p-4 sm:p-6">
+    <div className="p-2 sm:p-4 bg-muted/30 h-full overflow-auto custom-scrollbar flex justify-start">
+      <div className="w-full h-fit flex flex-col items-start lg:pl-2">
+        <Page className="scale-[0.8] sm:scale-100 origin-top-left">
           {renderTemplate()}
-        </div>
+        </Page>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ export interface Resume {
     user_id: string;
     title: string;
     template: string;
+    is_public: boolean;
     data: ResumeData;
     created_at: string;
     updated_at: string;
@@ -39,13 +40,14 @@ export const resumeService = {
         return data ? parseResumeData(data) : null;
     },
 
-    async createResume(userId: string, title: string, template: string, data: ResumeData): Promise<Resume> {
+    async createResume(userId: string, title: string, template: string, data: ResumeData, isPublic = false): Promise<Resume> {
         const { data: resume, error } = await supabase
             .from("resumes")
             .insert([{
                 user_id: userId,
                 title,
                 template,
+                is_public: isPublic,
                 data: data as unknown as Json,
             }])
             .select()
@@ -55,11 +57,12 @@ export const resumeService = {
         return parseResumeData(resume);
     },
 
-    async updateResume(id: string, title?: string, template?: string, data?: ResumeData): Promise<Resume> {
+    async updateResume(id: string, title?: string, template?: string, data?: ResumeData, isPublic?: boolean): Promise<Resume> {
         const updates: Record<string, unknown> = {};
         if (title !== undefined) updates.title = title;
         if (template !== undefined) updates.template = template;
         if (data !== undefined) updates.data = data as unknown as Json;
+        if (isPublic !== undefined) updates.is_public = isPublic;
 
         const { data: resume, error } = await supabase
             .from("resumes")

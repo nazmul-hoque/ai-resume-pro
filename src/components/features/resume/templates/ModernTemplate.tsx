@@ -1,8 +1,11 @@
 import { ResumeData } from "@/types/resume";
 import { Mail, Phone, MapPin, Linkedin, Globe } from "lucide-react";
+import { MarkdownRenderer } from "@/components/shared/MarkdownRenderer";
+import { EditableField } from "@/components/shared/EditableField";
 
 interface TemplateProps {
   data: ResumeData;
+  readOnly?: boolean;
 }
 
 const formatDate = (dateStr: string) => {
@@ -11,9 +14,7 @@ const formatDate = (dateStr: string) => {
   return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 };
 
-import { MarkdownRenderer } from "@/components/shared/MarkdownRenderer";
-
-export const ModernTemplate = ({ data }: TemplateProps) => {
+export const ModernTemplate = ({ data, readOnly = false }: TemplateProps) => {
   const { personalInfo, summary, experience, education, skills } = data;
 
   return (
@@ -21,51 +22,61 @@ export const ModernTemplate = ({ data }: TemplateProps) => {
       {/* Header */}
       <header className="border-b-2 border-foreground pb-4 mb-6">
         <h1 className="text-2xl font-bold text-foreground mb-2">
-          {personalInfo.fullName || "Your Name"}
+          <EditableField
+            name="personalInfo.fullName"
+            value={personalInfo.fullName}
+            placeholder="Your Name"
+            readOnly={readOnly}
+          />
         </h1>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           {personalInfo.email && (
             <span className="flex items-center gap-1">
               <Mail className="w-3 h-3" />
-              {personalInfo.email}
+              <EditableField name="personalInfo.email" value={personalInfo.email} readOnly={readOnly} />
             </span>
           )}
           {personalInfo.phone && (
             <span className="flex items-center gap-1">
               <Phone className="w-3 h-3" />
-              {personalInfo.phone}
+              <EditableField name="personalInfo.phone" value={personalInfo.phone} readOnly={readOnly} />
             </span>
           )}
           {personalInfo.location && (
             <span className="flex items-center gap-1">
               <MapPin className="w-3 h-3" />
-              {personalInfo.location}
+              <EditableField name="personalInfo.location" value={personalInfo.location} readOnly={readOnly} />
             </span>
           )}
           {personalInfo.linkedin && (
             <span className="flex items-center gap-1">
               <Linkedin className="w-3 h-3" />
-              {personalInfo.linkedin}
+              <EditableField name="personalInfo.linkedin" value={personalInfo.linkedin} readOnly={readOnly} />
             </span>
           )}
           {personalInfo.website && (
             <span className="flex items-center gap-1">
               <Globe className="w-3 h-3" />
-              {personalInfo.website}
+              <EditableField name="personalInfo.website" value={personalInfo.website} readOnly={readOnly} />
             </span>
           )}
         </div>
       </header>
 
       {/* Summary */}
-      {summary && (
-        <section className="mb-6">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-foreground mb-2">
-            Professional Summary
-          </h2>
-          <MarkdownRenderer content={summary} className="text-muted-foreground" />
-        </section>
-      )}
+      <section className="mb-6">
+        <h2 className="text-sm font-bold uppercase tracking-wide text-foreground mb-2">
+          Professional Summary
+        </h2>
+        <EditableField
+          name="summary"
+          value={summary || ""}
+          type="textarea"
+          multiline
+          renderValue={(val) => <MarkdownRenderer content={val} className="text-muted-foreground" />}
+          readOnly={readOnly}
+        />
+      </section>
 
       {/* Experience */}
       {experience.length > 0 && (
@@ -74,23 +85,35 @@ export const ModernTemplate = ({ data }: TemplateProps) => {
             Work Experience
           </h2>
           <div className="space-y-4">
-            {experience.map((exp) => (
+            {experience.map((exp, index) => (
               <div key={exp.id}>
                 <div className="flex justify-between items-start mb-1">
                   <div>
-                    <h3 className="font-semibold text-foreground">{exp.position}</h3>
-                    <p className="text-muted-foreground">
-                      {exp.company}
-                      {exp.location && ` • ${exp.location}`}
+                    <h3 className="font-semibold text-foreground">
+                      <EditableField name={`experience.${index}.position`} value={exp.position} readOnly={readOnly} />
+                    </h3>
+                    <p className="text-muted-foreground flex items-center gap-1">
+                      <EditableField name={`experience.${index}.company`} value={exp.company} readOnly={readOnly} />
+                      {exp.location && (
+                        <>
+                          <span>•</span>
+                          <EditableField name={`experience.${index}.location`} value={exp.location} readOnly={readOnly} />
+                        </>
+                      )}
                     </p>
                   </div>
                   <span className="text-xs text-muted-foreground whitespace-nowrap">
                     {formatDate(exp.startDate)} - {exp.current ? "Present" : formatDate(exp.endDate)}
                   </span>
                 </div>
-                {exp.description && (
-                  <MarkdownRenderer content={exp.description} className="text-muted-foreground text-xs mt-1" />
-                )}
+                <EditableField
+                  name={`experience.${index}.description`}
+                  value={exp.description || ""}
+                  type="textarea"
+                  multiline
+                  renderValue={(val) => <MarkdownRenderer content={val} className="text-muted-foreground text-xs mt-1" />}
+                  readOnly={readOnly}
+                />
               </div>
             ))}
           </div>

@@ -15,6 +15,7 @@ import { aiService } from "@/services/ai.service";
 import { ResumeData } from "@/types/resume";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { activityService } from "@/services/activity.service";
 
 export const ImportResume = () => {
     const [isImporting, setIsImporting] = useState(false);
@@ -42,6 +43,7 @@ export const ImportResume = () => {
             if (parsedData) {
                 reset(parsedData);
                 toast.success("Resume imported successfully!");
+                activityService.logActivity('resume_imported', "Imported resume data via AI");
                 setIsOpen(false);
             } else {
                 throw new Error("AI failed to parse resume data");

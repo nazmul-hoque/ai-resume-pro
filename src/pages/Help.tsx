@@ -49,7 +49,7 @@ const Help = () => {
     return (
         <div className="min-h-screen bg-background text-foreground">
             <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-lg">
-                <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+                <div className="max-w-full px-4 lg:px-8 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="gap-2">
                             <ArrowLeft className="w-4 h-4" />
@@ -63,7 +63,7 @@ const Help = () => {
                 </div>
             </header>
 
-            <main className="container mx-auto px-4 py-12">
+            <main className="max-w-7xl mx-auto px-4 lg:px-8 py-12">
                 <div className="max-w-3xl mx-auto space-y-12">
                     {/* Hero Section */}
                     <div className="text-center space-y-4">

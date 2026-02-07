@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { JobApplication, CreateApplicationDTO } from "@/types/application";
 import { toast } from "sonner";
+import { activityService } from "./activity.service";
 
 export const applicationService = {
     async createApplication(application: CreateApplicationDTO): Promise<JobApplication | null> {
@@ -26,6 +27,7 @@ export const applicationService = {
         }
 
         toast.success("Application tracked successfully!");
+        activityService.logActivity('application_saved', `Tracked application: ${application.company_name} - ${application.job_title}`);
         return data as unknown as JobApplication;
     },
 
