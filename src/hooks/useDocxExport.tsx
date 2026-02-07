@@ -48,12 +48,13 @@ export const useDocxExport = (options: UseDocxExportOptions = {}) => {
                 sectionAlignment: AlignmentType.LEFT,
                 sectionHeaderColor: isCreative ? "2563EB" : "000000",
                 headingSize: 26, // 13pt
-                bodySize: 20, // 10pt
+                bodySize: 22, // 11pt - slightly larger for better readability
                 nameSize: 56, // 28pt
-                subheadingSize: 22, // 11pt
+                subheadingSize: 24, // 12pt
                 headerUppercase: isClassic || templateId === "modern",
-                lineSpacing: 420, // 1.75 line spacing (extremely airy and premium)
-                paragraphSpacing: 300, // 15pt gap between paragraphs
+                lineSpacing: 276, // 1.15 line spacing (standard readable spacing)
+                paragraphSpacing: 160, // 8pt gap between paragraphs
+                bulletSpacing: 120, // 6pt gap for bullet items
             };
 
             // Formatting helper
@@ -106,9 +107,12 @@ export const useDocxExport = (options: UseDocxExportOptions = {}) => {
                         return new Paragraph({
                             children: parseFormatting(content, { size }),
                             bullet: isBullet ? { level: 0 } : undefined,
-                            spacing: { after: theme.paragraphSpacing, line: theme.lineSpacing },
+                            spacing: { 
+                                after: isBullet ? theme.bulletSpacing : theme.paragraphSpacing, 
+                                line: theme.lineSpacing 
+                            },
                             alignment: AlignmentType.LEFT,
-                            indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined, // Slight indent for creative to match preview " About Me"
+                            indent: isCreative ? { left: convertInchesToTwip(0.15) } : undefined,
                         });
                     });
             };
