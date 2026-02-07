@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Briefcase, FileText } from "lucide-react";
 import { TemplatesGallery } from "@/components/features/landing/TemplatesGallery";
+import { FeaturesSection } from "@/components/features/landing/FeaturesSection";
 import { ApplicationDashboard } from "@/components/features/applications/ApplicationDashboard";
 import { Footer } from "@/components/features/landing/Footer";
 import { TemplateId } from "@/components/features/resume/templates";
@@ -144,6 +145,7 @@ const Index = () => {
         onViewTemplates={handleViewTemplates}
         onViewApplications={user ? handleGoToApplications : undefined}
       />
+      <FeaturesSection />
       <TemplatesGallery onSelectTemplate={handleSelectTemplate} />
       <Footer />
     </div>
