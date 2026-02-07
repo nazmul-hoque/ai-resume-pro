@@ -61,9 +61,9 @@ export const CoverLetterGenerator = () => {
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="ghost" size="sm" className="gap-2 hover:bg-primary/10 transition-colors">
                     <Mail className="w-4 h-4 text-primary" />
-                    Cover Letter
+                    <span className="text-xs font-semibold uppercase tracking-wider">Cover Letter</span>
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">

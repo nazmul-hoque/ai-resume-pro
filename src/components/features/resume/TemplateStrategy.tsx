@@ -72,9 +72,9 @@ export const TemplateStrategy: React.FC<TemplateStrategyProps> = ({ resumeData, 
     return (
         <Sheet>
             <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="ghost" size="sm" className="gap-2 hover:bg-primary/10 transition-colors">
                     <LayoutTemplate className="w-4 h-4 text-primary" />
-                    Template Strategy
+                    <span className="text-xs font-semibold uppercase tracking-wider">Strategy</span>
                 </Button>
             </SheetTrigger>
             <SheetContent className="sm:max-w-md md:max-w-xl w-full">

@@ -58,9 +58,9 @@ export const ImportResume = () => {
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="ghost" size="sm" className="gap-2 hover:bg-primary/10 transition-colors">
                     <FileUp className="w-4 h-4 text-primary" />
-                    Import Existing
+                    <span className="text-xs font-semibold uppercase tracking-wider">Import</span>
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">

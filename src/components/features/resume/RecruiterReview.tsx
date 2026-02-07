@@ -83,9 +83,9 @@ export const RecruiterReview: React.FC<RecruiterReviewProps> = ({ resumeData, jo
     return (
         <Sheet>
             <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="ghost" size="sm" className="gap-2 hover:bg-primary/10 transition-colors">
                     <ScanSearch className="w-4 h-4 text-primary" />
-                    Recruiter Scan
+                    <span className="text-xs font-semibold uppercase tracking-wider">Scan</span>
                 </Button>
             </SheetTrigger>
             <SheetContent className="sm:max-w-md md:max-w-xl w-full">

@@ -301,94 +301,120 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
       <TooltipProvider>
         <div className="min-h-screen bg-background">
           {/* Header */}
-          <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-lg">
-            <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
+          <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-card/60 backdrop-blur-xl supports-[backdrop-filter]:bg-card/60">
+            <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
+              {/* Left: Navigation & Title */}
+              <div className="flex items-center gap-3 lg:gap-6 min-w-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onBack}
+                  className="h-9 w-9 p-0 rounded-full hover:bg-primary/10 transition-colors shrink-0"
+                >
                   <ArrowLeft className="w-4 h-4" />
-                  <span className="hidden sm:inline">Back</span>
+                  <span className="sr-only">Back</span>
                 </Button>
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={resumeTitle}
-                    onChange={(e) => setResumeTitle(e.target.value)}
-                    className="font-display font-bold text-lg border-0 bg-transparent p-0 h-auto focus-visible:ring-0 w-40 md:w-48"
-                    placeholder="Resume title"
-                  />
-                  {/* Save status indicator */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center">
-                        {isSaving ? (
-                          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                        ) : hasUnsavedChanges ? (
-                          <CloudOff className="w-4 h-4 text-amber-500" />
-                        ) : lastSaved ? (
-                          <Cloud className="w-4 h-4 text-primary" />
-                        ) : null}
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {isSaving ? "Saving..." : hasUnsavedChanges ? "Unsaved changes" : lastSaved ? "All changes saved" : ""}
-                    </TooltipContent>
-                  </Tooltip>
+
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-2 group">
+                    <Input
+                      value={resumeTitle}
+                      onChange={(e) => setResumeTitle(e.target.value)}
+                      className="font-display font-bold text-base md:text-lg border-0 bg-transparent p-0 h-auto focus-visible:ring-0 w-full max-w-[150px] md:max-w-[240px] truncate group-hover:text-primary transition-colors"
+                      placeholder="Resume title"
+                    />
+                    <Edit3 className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+
+                  {/* Save status integrated below title */}
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-1.5 cursor-help">
+                          {isSaving ? (
+                            <div className="flex items-center gap-1.5">
+                              <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Syncing...</span>
+                            </div>
+                          ) : hasUnsavedChanges ? (
+                            <div className="flex items-center gap-1.5">
+                              <CloudOff className="w-3 h-3 text-amber-500" />
+                              <span className="text-[10px] text-amber-500 font-medium uppercase tracking-wider">Unsaved Changes</span>
+                            </div>
+                          ) : lastSaved ? (
+                            <div className="flex items-center gap-1.5">
+                              <Cloud className="w-3 h-3 text-primary" />
+                              <span className="text-[10px] text-primary/80 font-medium uppercase tracking-wider">Saved to Cloud</span>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Draft</span>
+                          )}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" align="start">
+                        {isSaving ? "Synchronizing with your account..." : hasUnsavedChanges ? "Changes not yet saved" : lastSaved ? `Last saved at ${lastSaved.toLocaleTimeString()}` : "Ready to save"}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                {user && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={handleSave}
-                    disabled={isSaving || !hasUnsavedChanges}
-                  >
-                    {isSaving ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4" />
-                    )}
-                    <span className="hidden sm:inline">{isSaving ? "Saving..." : "Save"}</span>
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="md:hidden gap-2"
-                  onClick={() => setShowPreview(!showPreview)}
-                >
-                  {showPreview ? (
-                    <>
-                      <Edit3 className="w-4 h-4" />
-                      <span className="hidden sm:inline">Edit</span>
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="w-4 h-4" />
-                      <span className="hidden sm:inline">Preview</span>
-                    </>
-                  )}
-                </Button>
-                <div className="hidden lg:flex items-center gap-2">
+
+              {/* Center: AI Catalyst Toolkit (Hidden on Mobile) */}
+              <div className="hidden xl:flex items-center bg-muted/30 p-1 rounded-xl border border-white/5 shadow-inner">
+                <div className="flex items-center gap-0.5">
                   <ImportResume />
+                  <div className="w-[1px] h-6 bg-white/10 mx-1" />
                   <CoverLetterGenerator />
                   <TemplateStrategy resumeData={resumeData} />
                   <JobTargeting />
                   <RecruiterReview resumeData={resumeData} />
                 </div>
+              </div>
+
+              {/* Right: Actions */}
+              <div className="flex items-center gap-2 shrink-0">
+                {user && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "hidden sm:flex h-9 gap-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all",
+                      !hasUnsavedChanges && "opacity-50 grayscale"
+                    )}
+                    onClick={handleSave}
+                    disabled={isSaving || !hasUnsavedChanges}
+                  >
+                    {isSaving ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Save className="w-3.5 h-3.5" />
+                    )}
+                    <span className="text-xs font-semibold">Save</span>
+                  </Button>
+                )}
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="xl:hidden h-9 w-9 p-0 rounded-full"
+                  onClick={() => setShowPreview(!showPreview)}
+                >
+                  {showPreview ? <Edit3 className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </Button>
+
                 <Button
                   variant="hero"
                   size="sm"
-                  className="gap-2"
+                  className="h-9 px-4 lg:px-6 gap-2 rounded-full shadow-lg shadow-primary/20 ring-1 ring-white/20"
                   onClick={handleDownloadPdf}
                   disabled={isExporting}
                 >
                   {isExporting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <Download className="w-4 h-4" />
+                    <Download className="w-3.5 h-3.5" />
                   )}
-                  <span className="hidden sm:inline">{isExporting ? "Exporting..." : "Download"}</span>
+                  <span className="text-xs font-bold tracking-tight uppercase">Download</span>
                 </Button>
               </div>
             </div>

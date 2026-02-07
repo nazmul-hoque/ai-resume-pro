@@ -48,9 +48,9 @@ export const JobTargeting = () => {
     return (
         <Sheet>
             <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="ghost" size="sm" className="gap-2 hover:bg-primary/10 transition-colors">
                     <Target className="w-4 h-4 text-primary" />
-                    Target a Job
+                    <span className="text-xs font-semibold uppercase tracking-wider">Targeting</span>
                 </Button>
             </SheetTrigger>
             <SheetContent className="sm:max-w-md md:max-w-lg">
