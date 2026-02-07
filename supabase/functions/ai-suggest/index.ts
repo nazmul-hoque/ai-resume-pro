@@ -21,18 +21,50 @@ interface RequestBody {
 }
 
 serve(async (req) => {
+  // --- CORS ---
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", {
+      headers: {
+        ...corsHeaders,
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+      },
+    });
+  }
+
+  if (req.method !== "POST") {
+    return new Response(
+      JSON.stringify({ error: "Method not allowed" }),
+      { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 
   try {
+    // --- ENV ---
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const { type, context }: RequestBody = await req.json();
-    console.log(`AI suggestion request - type: ${type}`, context);
+    // --- SAFE BODY PARSING ---
+    let body: RequestBody;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON body" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { type, context } = body ?? {};
+    if (!type || !context) {
+      return new Response(
+        JSON.stringify({ error: "Missing type or context" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`AI suggestion request - type=${type}`);
 
     const PROMPTS: Record<string, { system: string; user: string }> = {
       summary: {
@@ -152,33 +184,43 @@ serve(async (req) => {
 
     const prompt = PROMPTS[type];
     if (!prompt) {
-      throw new Error(`Unknown suggestion type: ${type}`);
+      return new Response(
+        JSON.stringify({ error: `Unknown suggestion type: ${type}` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    console.log("Sending request to AI gateway...");
+    // --- TIMEOUT PROTECTION ---
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30_000); // 30s
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: prompt.system },
-          { role: "user", content: prompt.user },
-        ],
-        max_tokens: 2000,
-      }),
-    });
+    let response: Response;
+    try {
+      response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [
+            { role: "system", content: prompt.system },
+            { role: "user", content: prompt.user },
+          ],
+          max_tokens: 2000,
+        }),
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!response.ok) {
-      const errorText = await response.text();
       const status = response.status;
       const errorMap: Record<number, string> = {
         429: "Rate limit exceeded. Please try again in a moment.",
-        402: "AI usage limit reached. Please add credits to continue."
+        402: "AI usage limit reached. Please add credits to continue.",
       };
 
       return new Response(
@@ -188,7 +230,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const suggestion = data.choices?.[0]?.message?.content || "";
+    const suggestion = data?.choices?.[0]?.message?.content ?? "";
 
     return new Response(
       JSON.stringify({ suggestion }),
@@ -196,8 +238,11 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("AI suggestion error:", error);
+
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({
+        error: error instanceof Error ? error.message : "Unknown error",
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
