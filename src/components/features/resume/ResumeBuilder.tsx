@@ -132,7 +132,7 @@ const SortableAccordionItem = ({ id, icon: Icon, title, component, isComplete }:
             </div>
           </AccordionTrigger>
         </div>
-        <AccordionContent className="pt-2 pb-6 animate-fade-in">
+        <AccordionContent className="px-1 pt-2 pb-6 animate-fade-in">
           {component}
         </AccordionContent>
       </AccordionItem>
@@ -404,7 +404,7 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
                   <div className="p-4 border-b">
                     <ProgressSteps steps={progressSteps} />
                   </div>
-                  
+
                   <ScrollArea className="h-[calc(100vh-260px)]">
                     <div className="p-6">
                       <DndContext
@@ -416,8 +416,8 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
                           items={currentOrder}
                           strategy={verticalListSortingStrategy}
                         >
-                          <Accordion 
-                            type="multiple" 
+                          <Accordion
+                            type="multiple"
                             value={openSections}
                             onValueChange={setOpenSections}
                             className="space-y-4"
@@ -468,7 +468,7 @@ export const ResumeBuilder = ({ onBack, initialResume, initialTemplate }: Resume
               </div>
             </div>
           </div>
-          
+
           {/* Mobile action bar */}
           <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-card/95 backdrop-blur-lg border-t z-40">
             <div className="flex items-center justify-around gap-2">

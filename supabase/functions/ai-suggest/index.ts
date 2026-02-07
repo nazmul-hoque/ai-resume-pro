@@ -145,8 +145,7 @@ serve(async (req) => {
       improve_content: {
         system: `You are a professional resume writer. Rewrite the provided text to be more professional, action-oriented, and impactful. 
         Use strong action verbs. Quantify achievements where possible (add placeholders like [X] if needed but prefer polishing existing numbers).
-        Keep it concise and suited for a resume. Return ONLY the rewritten text, no other commentary.
-        Output strictly valid JSON: { "improvedText": "string" }`,
+        Keep it concise and suited for a resume. Return ONLY the rewritten text, no other commentary.`,
         user: `Original Text: "${context.currentText}"\nSection Type: ${context.sectionType || "General"}`
       }
     };
@@ -165,7 +164,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-1.5-flash",
         messages: [
           { role: "system", content: prompt.system },
           { role: "user", content: prompt.user },

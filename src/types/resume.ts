@@ -18,6 +18,13 @@ export const ExperienceSchema = z.object({
   endDate: z.string().min(1, "End date is required"),
   current: z.boolean(),
   description: z.string().min(1, "Description is required"),
+}).refine((data) => {
+  if (data.current) return true;
+  if (!data.startDate || !data.endDate) return true;
+  return data.startDate <= data.endDate;
+}, {
+  message: "Start date cannot be after end date",
+  path: ["startDate"],
 });
 
 export const EducationSchema = z.object({
@@ -28,6 +35,12 @@ export const EducationSchema = z.object({
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
   gpa: z.string().optional().or(z.literal("")),
+}).refine((data) => {
+  if (!data.startDate || !data.endDate) return true;
+  return data.startDate <= data.endDate;
+}, {
+  message: "Start date cannot be after end date",
+  path: ["startDate"],
 });
 
 export const SkillSchema = z.object({

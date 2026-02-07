@@ -30,7 +30,7 @@ export const Hero = ({ onGetStarted, onViewTemplates, onViewApplications }: Hero
               Sign Out
             </Button>
           ) : (
-            <Link to="/auth">
+            <Link to="/signin">
               <Button
                 variant="ghost"
                 size="sm"

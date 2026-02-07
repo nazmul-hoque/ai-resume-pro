@@ -43,9 +43,16 @@ async function invokeAI<T = string>(
 
         if (shouldParse && data?.suggestion) {
             try {
-                return JSON.parse(data.suggestion) as T;
+                // Find the first '{' and the last '}' to extract JSON from potentially messy AI output
+                const jsonMatch = data.suggestion.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) {
+                    console.error(`No JSON object found in AI ${type} response. Raw:`, data.suggestion);
+                    throw new Error("No JSON found in AI response");
+                }
+                return JSON.parse(jsonMatch[0]) as T;
             } catch (parseErr) {
-                console.error(`Failed to parse AI ${type} response:`, parseErr);
+                console.error(`Failed to parse AI ${type} response. Raw:`, data.suggestion);
+                console.error(`Parse error:`, parseErr);
                 throw new Error("Invalid response format from AI");
             }
         }
@@ -101,6 +108,7 @@ export const aiService = {
         currentText: string,
         sectionType: string
     ): Promise<{ improvedText: string } | null> {
-        return invokeAI<{ improvedText: string }>("improve_content", { currentText, sectionType }, true);
+        const suggestion = await invokeAI<string>("improve_content", { currentText, sectionType }, false);
+        return suggestion ? { improvedText: suggestion } : null;
     },
 };

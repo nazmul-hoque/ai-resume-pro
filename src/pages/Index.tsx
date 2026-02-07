@@ -26,7 +26,7 @@ const Index = () => {
     if (user) {
       setShowSavedResumes(true);
     } else {
-      navigate("/auth");
+      navigate("/signin");
     }
   };
 
@@ -44,7 +44,7 @@ const Index = () => {
       setShowSavedResumes(false);
     } else {
       // Store preference for after login if desired, or just redirect
-      navigate("/auth");
+      navigate("/signin");
     }
   };
 
